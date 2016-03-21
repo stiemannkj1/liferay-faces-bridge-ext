@@ -13,6 +13,8 @@
  */
 package com.liferay.faces.bridge.filter.liferay.internal;
 
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 import javax.portlet.PortletRequest;
 
 import com.liferay.faces.util.logging.Logger;
@@ -30,7 +32,10 @@ public class LiferayPortalUtil {
 	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(LiferayPortalUtil.class);
 
-	public static String getPortletId(PortletRequest portletRequest) {
+	public static String getPortletId(FacesContext facesContext) {
+
+		ExternalContext externalContext = facesContext.getExternalContext();
+		PortletRequest portletRequest = (PortletRequest) externalContext.getRequest();
 		String portletId = null;
 
 		try {

@@ -13,11 +13,9 @@
  */
 package com.liferay.faces.bridge.filter.liferay.internal;
 
+import javax.faces.context.FacesContext;
 import javax.portlet.ActionResponse;
-import javax.portlet.PortletRequest;
 import javax.portlet.filter.ActionResponseWrapper;
-
-import com.liferay.faces.bridge.context.BridgeContext;
 
 
 /**
@@ -42,22 +40,16 @@ public class ActionResponseBridgeLiferayImpl extends ActionResponseWrapper {
 
 			if (namespace.startsWith("wsrp_rewrite")) {
 
-				BridgeContext bridgeContext = BridgeContext.getCurrentInstance();
-				namespace = getNamespaceWSRP(bridgeContext);
+				if (responseNamespaceWSRP == null) {
+
+					FacesContext facesContext = FacesContext.getCurrentInstance();
+					responseNamespaceWSRP = LiferayPortalUtil.getPortletId(facesContext);
+				}
+
+				namespace = responseNamespaceWSRP;
 			}
 		}
 
 		return namespace;
-	}
-
-	protected String getNamespaceWSRP(BridgeContext bridgeContext) {
-
-		if (responseNamespaceWSRP == null) {
-
-			PortletRequest portletRequest = bridgeContext.getPortletRequest();
-			responseNamespaceWSRP = LiferayPortalUtil.getPortletId(portletRequest);
-		}
-
-		return responseNamespaceWSRP;
 	}
 }
