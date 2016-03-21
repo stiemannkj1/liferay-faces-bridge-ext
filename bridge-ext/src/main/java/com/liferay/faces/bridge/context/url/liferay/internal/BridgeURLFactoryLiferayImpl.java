@@ -36,26 +36,26 @@ public class BridgeURLFactoryLiferayImpl extends BridgeURLFactory {
 	}
 
 	@Override
-	public BridgeURL getBridgeActionURL(BridgeContext bridgeContext, BridgeURI bridgeURI, String viewId) {
-		return wrappedBridgeURLFactory.getBridgeActionURL(bridgeContext, bridgeURI, viewId);
+	public BridgeURL getBridgeActionURL(FacesContext facesContext, BridgeURI bridgeURI, String viewId) {
+		return wrappedBridgeURLFactory.getBridgeActionURL(facesContext, bridgeURI, viewId);
 	}
 
 	@Override
-	public BridgeURL getBridgeBookmarkableURL(BridgeContext bridgeContext, BridgeURI bridgeURI,
+	public BridgeURL getBridgeBookmarkableURL(FacesContext facesContext, BridgeURI bridgeURI,
 		Map<String, List<String>> parameters, String viewId) {
-		return wrappedBridgeURLFactory.getBridgeBookmarkableURL(bridgeContext, bridgeURI, parameters, viewId);
+		return wrappedBridgeURLFactory.getBridgeBookmarkableURL(facesContext, bridgeURI, parameters, viewId);
 	}
 
 	@Override
-	public BridgeURL getBridgePartialActionURL(BridgeContext bridgeContext, BridgeURI bridgeURI, String viewId) {
-		return wrappedBridgeURLFactory.getBridgePartialActionURL(bridgeContext, bridgeURI, viewId);
+	public BridgeURL getBridgePartialActionURL(FacesContext facesContext, BridgeURI bridgeURI, String viewId) {
+		return wrappedBridgeURLFactory.getBridgePartialActionURL(facesContext, bridgeURI, viewId);
 	}
 
 	@Override
-	public BridgeURL getBridgeRedirectURL(BridgeContext bridgeContext, BridgeURI bridgeURI,
+	public BridgeURL getBridgeRedirectURL(FacesContext facesContext, BridgeURI bridgeURI,
 		Map<String, List<String>> parameters, String redirectViewId) {
 
-		BridgeURL wrappedBridgeRedirectURL = wrappedBridgeURLFactory.getBridgeRedirectURL(bridgeContext, bridgeURI,
+		BridgeURL wrappedBridgeRedirectURL = wrappedBridgeURLFactory.getBridgeRedirectURL(facesContext, bridgeURI,
 				parameters, redirectViewId);
 
 		return new BridgeRedirectURLLiferayImpl(bridgeContext, bridgeURI, parameters, redirectViewId,
@@ -63,8 +63,8 @@ public class BridgeURLFactoryLiferayImpl extends BridgeURLFactory {
 	}
 
 	@Override
-	public BridgeResourceURL getBridgeResourceURL(BridgeContext bridgeContext, BridgeURI bridgeURI, String viewId) {
-		return wrappedBridgeURLFactory.getBridgeResourceURL(bridgeContext, bridgeURI, viewId);
+	public BridgeURL getBridgeResourceURL(FacesContext facesContext, BridgeURI bridgeURI, String viewId) {
+		return wrappedBridgeURLFactory.getBridgeResourceURL(facesContext, bridgeURI, viewId);
 	}
 
 	@Override

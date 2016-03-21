@@ -13,13 +13,13 @@
  */
 package com.liferay.faces.bridge.event.liferay.internal;
 
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 import javax.faces.event.PhaseEvent;
 import javax.faces.event.PhaseId;
 import javax.faces.event.PhaseListener;
 import javax.portlet.PortletRequest;
 import javax.servlet.http.HttpServletRequest;
-
-import com.liferay.faces.bridge.context.BridgeContext;
 
 import com.liferay.portal.kernel.servlet.taglib.util.OutputData;
 import com.liferay.portal.kernel.util.StringBundler;
@@ -45,13 +45,13 @@ public class LiferayPageTopPhaseListenerCompat implements PhaseListener {
 	 */
 	public void afterPhase(PhaseEvent phaseEvent) {
 
-		BridgeContext bridgeContext = BridgeContext.getCurrentInstance();
-
 		// Remove duplicate resources from the LIFERAY_SHARED_PAGE_TOP request attribute. For more information, see:
 		// http://issues.liferay.com/browse/FACES-1216
 		if (liferaySharedPageTopLength > 0) {
 
-			PortletRequest portletRequest = bridgeContext.getPortletRequest();
+			FacesContext facesContext = FacesContext.getCurrentInstance();
+			ExternalContext externalContext = facesContext.getExternalContext();
+			PortletRequest portletRequest = (PortletRequest) externalContext.getRequest();
 
 			StringBundler pageTop = getPageTop(portletRequest);
 
@@ -75,8 +75,9 @@ public class LiferayPageTopPhaseListenerCompat implements PhaseListener {
 		// the {@link #afterPhase(PhaseEvent)} can be optimized.
 		liferaySharedPageTopLength = 0;
 
-		BridgeContext bridgeContext = BridgeContext.getCurrentInstance();
-		PortletRequest portletRequest = bridgeContext.getPortletRequest();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		ExternalContext externalContext = facesContext.getExternalContext();
+		PortletRequest portletRequest = (PortletRequest) externalContext.getRequest();
 		StringBundler pageTop = getPageTop(portletRequest);
 
 		if (pageTop != null) {

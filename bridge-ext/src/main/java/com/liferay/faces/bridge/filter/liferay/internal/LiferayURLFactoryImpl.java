@@ -13,11 +13,11 @@
  */
 package com.liferay.faces.bridge.filter.liferay.internal;
 
+import javax.faces.context.FacesContext;
 import javax.portlet.MimeResponse;
 import javax.portlet.PortletURL;
 import javax.portlet.ResourceURL;
 
-import com.liferay.faces.bridge.context.BridgeContext;
 import com.liferay.faces.bridge.filter.liferay.LiferayActionURL;
 import com.liferay.faces.bridge.filter.liferay.LiferayRenderURL;
 import com.liferay.faces.bridge.filter.liferay.LiferayResourceURL;
@@ -48,10 +48,10 @@ public class LiferayURLFactoryImpl extends LiferayURLFactory {
 		"com.liferay.faces.bridge.container.liferay.RESOURCE_URL_GENERATOR";
 
 	@Override
-	public LiferayActionURL getLiferayActionURL(BridgeContext bridgeContext, MimeResponse mimeResponse,
+	public LiferayActionURL getLiferayActionURL(FacesContext facesContext, MimeResponse mimeResponse,
 		String responseNamespace) {
 
-		LiferayURLGenerator liferayURLGenerator = (LiferayURLGenerator) bridgeContext.getAttributes().get(
+		LiferayURLGenerator liferayURLGenerator = (LiferayURLGenerator) facesContext.getAttributes().get(
 				ACTION_URL_GENERATOR);
 
 		if (liferayURLGenerator == null) {
@@ -59,14 +59,14 @@ public class LiferayURLFactoryImpl extends LiferayURLFactory {
 			PortletURL actionURL = mimeResponse.createActionURL();
 			liferayURLGenerator = new LiferayURLGeneratorActionImpl(actionURL.toString(), actionURL.getPortletMode(),
 					responseNamespace, actionURL.getWindowState());
-			bridgeContext.getAttributes().put(ACTION_URL_GENERATOR, liferayURLGenerator);
+			facesContext.getAttributes().put(ACTION_URL_GENERATOR, liferayURLGenerator);
 		}
 
 		return new LiferayActionURLImpl(liferayURLGenerator);
 	}
 
 	@Override
-	public LiferayRenderURL getLiferayRenderURL(BridgeContext bridgeContext, MimeResponse mimeResponse,
+	public LiferayRenderURL getLiferayRenderURL(FacesContext facesContext, MimeResponse mimeResponse,
 		String responseNamespace, boolean friendlyURLMapperEnabled) {
 
 		LiferayRenderURL liferayRenderURL;
@@ -77,7 +77,7 @@ public class LiferayURLFactoryImpl extends LiferayURLFactory {
 			liferayRenderURL = new LiferayRenderURLFriendlyImpl(renderURL, responseNamespace);
 		}
 		else {
-			LiferayURLGenerator liferayURLGenerator = (LiferayURLGenerator) bridgeContext.getAttributes().get(
+			LiferayURLGenerator liferayURLGenerator = (LiferayURLGenerator) facesContext.getAttributes().get(
 					RENDER_URL_GENERATOR);
 
 			if (liferayURLGenerator == null) {
@@ -85,7 +85,7 @@ public class LiferayURLFactoryImpl extends LiferayURLFactory {
 				PortletURL renderURL = mimeResponse.createRenderURL();
 				liferayURLGenerator = new LiferayURLGeneratorRenderImpl(renderURL.toString(),
 						renderURL.getPortletMode(), responseNamespace, renderURL.getWindowState());
-				bridgeContext.getAttributes().put(RENDER_URL_GENERATOR, liferayURLGenerator);
+				facesContext.getAttributes().put(RENDER_URL_GENERATOR, liferayURLGenerator);
 			}
 
 			liferayRenderURL = new LiferayRenderURLImpl(liferayURLGenerator);
@@ -95,17 +95,17 @@ public class LiferayURLFactoryImpl extends LiferayURLFactory {
 	}
 
 	@Override
-	public LiferayResourceURL getLiferayResourceURL(BridgeContext bridgeContext, MimeResponse mimeResponse,
+	public LiferayResourceURL getLiferayResourceURL(FacesContext facesContext, MimeResponse mimeResponse,
 		String responseNamespace) {
 
-		LiferayURLGenerator liferayURLGenerator = (LiferayURLGenerator) bridgeContext.getAttributes().get(
+		LiferayURLGenerator liferayURLGenerator = (LiferayURLGenerator) facesContext.getAttributes().get(
 				RESOURCE_URL_GENERATOR);
 
 		if (liferayURLGenerator == null) {
 
 			ResourceURL resourceURL = mimeResponse.createResourceURL();
 			liferayURLGenerator = new LiferayURLGeneratorResourceImpl(resourceURL.toString(), responseNamespace);
-			bridgeContext.getAttributes().put(RESOURCE_URL_GENERATOR, liferayURLGenerator);
+			facesContext.getAttributes().put(RESOURCE_URL_GENERATOR, liferayURLGenerator);
 		}
 
 		return new LiferayResourceURLImpl(liferayURLGenerator);
