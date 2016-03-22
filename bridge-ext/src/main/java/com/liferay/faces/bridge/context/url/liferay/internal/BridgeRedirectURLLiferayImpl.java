@@ -13,101 +13,109 @@
  */
 package com.liferay.faces.bridge.context.url.liferay.internal;
 
-import java.net.MalformedURLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 import javax.portlet.BaseURL;
+import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
 import javax.portlet.faces.Bridge;
 import javax.portlet.faces.BridgeUtil;
+import javax.portlet.filter.PortletResponseWrapper;
 
 import com.liferay.faces.bridge.config.BridgeConfig;
-import com.liferay.faces.bridge.context.BridgeContext;
-import com.liferay.faces.bridge.context.url.BridgeURI;
 import com.liferay.faces.bridge.context.url.BridgeURL;
+import com.liferay.faces.bridge.context.url.BridgeURLWrapper;
+
+import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 
 
 /**
  * @author  Neil Griffin
  */
-public class BridgeRedirectURLLiferayImpl extends BridgeURLLiferayBase {
+public class BridgeRedirectURLLiferayImpl extends BridgeURLWrapper {
 
 	// Private Data Members
 	private PortletResponse portletResponse;
-	private String uri;
 	private String viewId;
 	private String viewIdRenderParameterName;
 	private BridgeURL wrappedBridgeRedirectURL;
 
-	public BridgeRedirectURLLiferayImpl(BridgeContext bridgeContext, BridgeURI bridgeURI,
-		Map<String, List<String>> parameters, String viewId, BridgeURL bridgeRedirectURL) {
+	public BridgeRedirectURLLiferayImpl(BridgeURL wrappedBridgeRedirectURL, FacesContext facesContext, String viewId) {
 
-		super(bridgeContext, bridgeURI, viewId);
-		this.uri = bridgeURI.toString();
-		this.portletResponse = bridgeContext.getPortletResponse();
-		this.viewId = viewId;
+		this.wrappedBridgeRedirectURL = wrappedBridgeRedirectURL;
 
-		BridgeConfig bridgeConfig = bridgeContext.getBridgeConfig();
+		ExternalContext externalContext = facesContext.getExternalContext();
+		this.portletResponse = (PortletResponse) externalContext.getResponse();
+
+		PortletRequest portletRequest = (PortletRequest) externalContext.getRequest();
+		BridgeConfig bridgeConfig = (BridgeConfig) portletRequest.getAttribute(BridgeConfig.class.getName());
 		this.viewIdRenderParameterName = bridgeConfig.getViewIdRenderParameterName();
-		this.wrappedBridgeRedirectURL = bridgeRedirectURL;
+		this.viewId = viewId;
+	}
 
-		if (parameters != null) {
+	public BaseURL createRenderURL(PortletResponse portletResponse) {
 
-			Map<String, String[]> parameterMap = getParameterMap();
-			Set<Map.Entry<String, List<String>>> entrySet = parameters.entrySet();
+		BaseURL renderURL = null;
 
-			for (Map.Entry<String, List<String>> mapEntry : entrySet) {
+		if (portletResponse != null) {
 
-				String key = mapEntry.getKey();
-				String[] valueArray = null;
-				List<String> valueList = mapEntry.getValue();
+			while ((portletResponse instanceof PortletResponseWrapper) &&
+					!(portletResponse instanceof LiferayPortletResponse)) {
 
-				if (valueList != null) {
-					valueArray = valueList.toArray(new String[valueList.size()]);
-				}
+				PortletResponseWrapper portletResponseWrapper = (PortletResponseWrapper) portletResponse;
+				portletResponse = portletResponseWrapper.getResponse();
+			}
 
-				parameterMap.put(key, valueArray);
+			if (portletResponse instanceof LiferayPortletResponse) {
+
+				LiferayPortletResponse liferayPortletResponse = (LiferayPortletResponse) portletResponse;
+				renderURL = liferayPortletResponse.createRenderURL();
 			}
 		}
 
+		return renderURL;
 	}
 
 	@Override
-	public PortletURL createRenderURL(String fromURL) throws MalformedURLException {
+	public String toString() {
 
-		LiferayPortletResponse liferayPortletResponse = new LiferayPortletResponse(portletResponse);
-
-		return liferayPortletResponse.createRenderURL();
-	}
-
-	@Override
-	public BaseURL toBaseURL() throws MalformedURLException {
-
-		BaseURL baseURL;
+		String string = null;
 
 		if (BridgeUtil.getPortletRequestPhase() == Bridge.PortletPhase.ACTION_PHASE) {
 
-			baseURL = createRenderURL(uri);
-			baseURL.setParameter(viewIdRenderParameterName, viewId);
+			BaseURL baseURL = createRenderURL(portletResponse);
 
-			Map<String, String[]> parameterMap = getParameterMap();
-			Set<Map.Entry<String, String[]>> entrySet = parameterMap.entrySet();
+			if (baseURL != null) {
 
-			for (Map.Entry<String, String[]> mapEntry : entrySet) {
+				baseURL.setParameter(viewIdRenderParameterName, viewId);
 
-				String parameterName = mapEntry.getKey();
-				String[] parameterValues = mapEntry.getValue();
+				Map<String, String[]> parameterMap = getParameterMap();
+				Set<Map.Entry<String, String[]>> entrySet = parameterMap.entrySet();
 
-				baseURL.setParameter(parameterName, parameterValues);
+				for (Map.Entry<String, String[]> mapEntry : entrySet) {
+
+					String parameterName = mapEntry.getKey();
+					String[] parameterValues = mapEntry.getValue();
+
+					baseURL.setParameter(parameterName, parameterValues);
+				}
+
+				string = baseURL.toString();
 			}
 		}
-		else {
-			baseURL = wrappedBridgeRedirectURL.toBaseURL();
+
+		if (string == null) {
+			string = super.toString();
 		}
 
-		return baseURL;
+		return string;
+	}
+
+	@Override
+	public BridgeURL getWrapped() {
+		return wrappedBridgeRedirectURL;
 	}
 }
