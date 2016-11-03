@@ -49,32 +49,25 @@ public class BridgeRedirectURLLiferayImpl extends BridgeURLWrapper {
 	public String toString() {
 
 		FacesContext facesContext = FacesContext.getCurrentInstance();
+		ExternalContext externalContext = facesContext.getExternalContext();
+		Map<String, Object> requestMap = externalContext.getRequestMap();
+		BridgeConfig bridgeConfig = (BridgeConfig) requestMap.get(BridgeConfig.class.getName());
+		PortletResponse portletResponse = (PortletResponse) externalContext.getResponse();
+		LiferayPortletResponse liferayPortletResponse = new LiferayPortletResponse(portletResponse);
+		PortletURL renderURL = liferayPortletResponse.createRenderURL();
+		renderURL.setParameter(bridgeConfig.getViewIdRenderParameterName(), wrappedBridgeRedirectURL.getViewId());
 
-		if (BridgeUtil.getPortletRequestPhase(facesContext) == Bridge.PortletPhase.ACTION_PHASE) {
+		Map<String, String[]> parameterMap = getParameterMap();
+		Set<Map.Entry<String, String[]>> entrySet = parameterMap.entrySet();
 
-			ExternalContext externalContext = facesContext.getExternalContext();
-			Map<String, Object> requestMap = externalContext.getRequestMap();
-			BridgeConfig bridgeConfig = (BridgeConfig) requestMap.get(BridgeConfig.class.getName());
-			PortletResponse portletResponse = (PortletResponse) externalContext.getResponse();
-			LiferayPortletResponse liferayPortletResponse = new LiferayPortletResponse(portletResponse);
-			PortletURL renderURL = liferayPortletResponse.createRenderURL();
-			renderURL.setParameter(bridgeConfig.getViewIdRenderParameterName(), wrappedBridgeRedirectURL.getViewId());
+		for (Map.Entry<String, String[]> mapEntry : entrySet) {
 
-			Map<String, String[]> parameterMap = getParameterMap();
-			Set<Map.Entry<String, String[]>> entrySet = parameterMap.entrySet();
+			String parameterName = mapEntry.getKey();
+			String[] parameterValues = mapEntry.getValue();
 
-			for (Map.Entry<String, String[]> mapEntry : entrySet) {
-
-				String parameterName = mapEntry.getKey();
-				String[] parameterValues = mapEntry.getValue();
-
-				renderURL.setParameter(parameterName, parameterValues);
-			}
-
-			return renderURL.toString();
+			renderURL.setParameter(parameterName, parameterValues);
 		}
-		else {
-			return wrappedBridgeRedirectURL.toString();
-		}
+
+		return renderURL.toString();
 	}
 }
