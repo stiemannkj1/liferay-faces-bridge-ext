@@ -13,17 +13,33 @@
  */
 package com.liferay.faces.bridge.ext.application.internal;
 
+import java.io.IOException;
 import java.util.Collections;
+import java.util.Dictionary;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import javax.faces.application.Application;
+import javax.faces.application.ProjectStage;
 import javax.faces.application.Resource;
 import javax.faces.application.ResourceHandler;
 import javax.faces.application.ResourceHandlerWrapper;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
+
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
+
 import com.liferay.faces.bridge.ext.config.internal.LiferayPortletConfigParam;
+import com.liferay.faces.bridge.ext.mojarra.spi.internal.ConfigurationResourceProviderBase;
+import com.liferay.faces.util.helper.BooleanHelper;
 import com.liferay.faces.util.product.Product;
 import com.liferay.faces.util.product.ProductFactory;
 
@@ -41,6 +57,11 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 	private static final Set<String> BUTTERFACES_DIST_BOWER_JQUERY_PLUGIN_JS_RESOURCES;
 	private static final Set<String> BUTTERFACES_DIST_BUNDLE_JS_JQUERY_PLUGIN_JS_RESOURCES;
 	private static final Set<String> BUTTERFACES_EXTERNAL_JQUERY_PLUGIN_JS_RESOURCES;
+	private static final String GLOBAL_AMD_LOADER_EXPOSED_PROPERTY_NAME = "exposeGlobal";
+	private static final String GLOBAL_AMD_LOADER_EXPOSED_KEY = ResourceHandlerLiferayImpl.class.getName() + "." +
+		GLOBAL_AMD_LOADER_EXPOSED_PROPERTY_NAME;
+	private static final String JS_LOADER_CONFIGURATION_PID =
+		"com.liferay.frontend.js.loader.modules.extender.internal.Details";
 	private static final boolean PRIMEFACES_DETECTED = ProductFactory.getProduct(Product.Name.PRIMEFACES).isDetected();
 	private static final Set<String> PRIMEFACES_JQUERY_PLUGIN_JS_RESOURCES;
 	private static final boolean RICHFACES_DETECTED = ProductFactory.getProduct(Product.Name.RICHFACES).isDetected();
@@ -131,12 +152,14 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 
 	// Final Data Members
 	private final Set<String> disabledAMDLoaderResources;
+	private final boolean projectStageDevelopment;
 
 	public ResourceHandlerLiferayImpl(ResourceHandler wrappedResourceHandler) {
 
 		this.wrappedResourceHandler = wrappedResourceHandler;
 
 		Set<String> disabledAMDLoaderResources = Collections.emptySet();
+		ProjectStage projectStage = ProjectStage.Production;
 		FacesContext startupFacesContext = FacesContext.getCurrentInstance();
 
 		if (startupFacesContext != null) {
@@ -171,9 +194,13 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 					disabledAMDLoaderResources = Collections.unmodifiableSet(disabledAMDLoaderResources);
 				}
 			}
+
+			Application application = startupFacesContext.getApplication();
+			projectStage = application.getProjectStage();
 		}
 
 		this.disabledAMDLoaderResources = disabledAMDLoaderResources;
+		this.projectStageDevelopment = ProjectStage.Development.equals(projectStage);
 	}
 
 	@Override
@@ -181,8 +208,7 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 
 		Resource resource = super.createResource(resourceName);
 
-		if (isJavaScriptResource(resource) && !(resource instanceof JSResourceWithDisabledAMDLoaderImpl) &&
-				(isJQueryPluginJSResource(null, resourceName) || !isAMDLoaderEnabledForResource(null, resourceName))) {
+		if (isDisableAMDLoaderForResource(resource, null, resourceName)) {
 			resource = new JSResourceWithDisabledAMDLoaderImpl(resource);
 		}
 
@@ -194,9 +220,7 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 
 		Resource resource = super.createResource(resourceName, libraryName);
 
-		if (isJavaScriptResource(resource) && !(resource instanceof JSResourceWithDisabledAMDLoaderImpl) &&
-				(isJQueryPluginJSResource(libraryName, resourceName) ||
-					!isAMDLoaderEnabledForResource(libraryName, resourceName))) {
+		if (isDisableAMDLoaderForResource(resource, libraryName, resourceName)) {
 			resource = new JSResourceWithDisabledAMDLoaderImpl(resource);
 		}
 
@@ -208,9 +232,7 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 
 		Resource resource = super.createResource(resourceName, libraryName, contentType);
 
-		if (isJavaScriptResource(resource) && !(resource instanceof JSResourceWithDisabledAMDLoaderImpl) &&
-				(isJQueryPluginJSResource(libraryName, resourceName) ||
-					!isAMDLoaderEnabledForResource(libraryName, resourceName))) {
+		if (isDisableAMDLoaderForResource(resource, libraryName, resourceName)) {
 			resource = new JSResourceWithDisabledAMDLoaderImpl(resource);
 		}
 
@@ -233,11 +255,105 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 		return !disabledAMDLoaderResources.contains(resourceId);
 	}
 
-	private boolean isJavaScriptResource(Resource resource) {
+	private boolean isDisableAMDLoaderForResource(Resource resource, String libraryName, String resourceName) {
+		return isJavaScriptResource(resource, resourceName) &&
+			!(resource instanceof JSResourceWithDisabledAMDLoaderImpl) &&
+			(isJQueryPluginJSResource(libraryName, resourceName) ||
+				!isAMDLoaderEnabledForResource(libraryName, resourceName)) && isGlobalAMDLoaderExposed();
+	}
+
+	private boolean isGlobalAMDLoaderExposed() {
+
+		boolean amdLoaderExposed = true;
+		Object amdLoaderExposedObject = null;
+		Map<String, Object> applicationMap = null;
+
+		if (!projectStageDevelopment) {
+
+			FacesContext facesContext = FacesContext.getCurrentInstance();
+			ExternalContext externalContext = facesContext.getExternalContext();
+			applicationMap = externalContext.getApplicationMap();
+			amdLoaderExposedObject = applicationMap.get(GLOBAL_AMD_LOADER_EXPOSED_KEY);
+		}
+
+		if (amdLoaderExposedObject == null) {
+
+			Bundle portletBundle = FrameworkUtil.getBundle(ConfigurationResourceProviderBase.class);
+			BundleContext bundleContext = portletBundle.getBundleContext();
+			ServiceReference configurationAdminReference = bundleContext.getServiceReference(ConfigurationAdmin.class
+					.getName());
+
+			if (configurationAdminReference != null) {
+
+				ConfigurationAdmin configurationAdmin = (ConfigurationAdmin) bundleContext.getService(
+						configurationAdminReference);
+
+				if (configurationAdmin != null) {
+
+					try {
+
+						Configuration jsLoaderConfiguration = configurationAdmin.getConfiguration(
+								JS_LOADER_CONFIGURATION_PID);
+						Dictionary<String, Object> properties = jsLoaderConfiguration.getProperties();
+
+						if (properties != null) {
+							amdLoaderExposedObject = properties.get(GLOBAL_AMD_LOADER_EXPOSED_PROPERTY_NAME);
+						}
+						else {
+
+							Configuration[] configurations = configurationAdmin.listConfigurations(null);
+
+							for (Configuration configuration : configurations) {
+
+								properties = configuration.getProperties();
+
+								if (properties != null) {
+
+									amdLoaderExposedObject = properties.get(GLOBAL_AMD_LOADER_EXPOSED_PROPERTY_NAME);
+
+									if (amdLoaderExposedObject != null) {
+										break;
+									}
+								}
+							}
+						}
+					}
+					catch (IOException e) {
+						// Do nothing.
+					}
+					catch (InvalidSyntaxException e) {
+						// Do nothing.
+					}
+				}
+			}
+
+			if (amdLoaderExposedObject != null) {
+
+				if (amdLoaderExposedObject instanceof Boolean) {
+					amdLoaderExposed = (Boolean) amdLoaderExposedObject;
+				}
+				else {
+
+					String exposeGlobalString = amdLoaderExposedObject.toString();
+					amdLoaderExposed = BooleanHelper.toBoolean(exposeGlobalString);
+				}
+			}
+
+			if (!projectStageDevelopment) {
+				applicationMap.put(GLOBAL_AMD_LOADER_EXPOSED_KEY, amdLoaderExposed);
+			}
+		}
+		else {
+			amdLoaderExposed = (Boolean) amdLoaderExposedObject;
+		}
+
+		return amdLoaderExposed;
+	}
+
+	private boolean isJavaScriptResource(Resource resource, String resourceName) {
 
 		if (resource != null) {
 
-			String resourceName = resource.getResourceName();
 			String contentType = resource.getContentType();
 
 			return (resourceName.endsWith(".js") || "application/javascript".equals(contentType) ||
