@@ -36,6 +36,15 @@ public class FacesConfigResourceProviderLiferayImpl extends ConfigurationResourc
 	 */
 	@Override
 	public Collection<URI> getResources(ServletContext servletContext) {
-		return getResourcesPattern("*.faces-config.xml");
+
+		String facesConfigPattern = "*.faces-config.xml";
+
+		if (FacesBundleUtil.isThinWab(servletContext)) {
+
+			// Get all faces-config.xml files and *.faces-config.xml files.
+			facesConfigPattern = "*faces-config.xml";
+		}
+
+		return getResourcesPattern(facesConfigPattern, servletContext);
 	}
 }

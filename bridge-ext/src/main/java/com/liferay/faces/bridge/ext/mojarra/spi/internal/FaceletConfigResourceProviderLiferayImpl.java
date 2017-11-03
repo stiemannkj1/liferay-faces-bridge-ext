@@ -36,6 +36,6 @@ public class FaceletConfigResourceProviderLiferayImpl extends ConfigurationResou
 	 */
 	@Override
 	public Collection<URI> getResources(ServletContext servletContext) {
-		return getResourcesPattern("*.taglib.xml");
+		return getResourcesPattern("*.taglib.xml", servletContext);
 	}
 }

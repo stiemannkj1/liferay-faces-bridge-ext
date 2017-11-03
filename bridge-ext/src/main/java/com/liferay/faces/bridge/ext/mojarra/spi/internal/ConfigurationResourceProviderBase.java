@@ -26,13 +26,13 @@ import java.util.List;
 import javax.servlet.ServletContext;
 
 import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.wiring.BundleWiring;
 
 import com.liferay.faces.util.logging.Logger;
 import com.liferay.faces.util.logging.LoggerFactory;
 
 import com.sun.faces.spi.ConfigurationResourceProvider;
+import java.util.Set;
 
 
 /**
@@ -43,82 +43,76 @@ public abstract class ConfigurationResourceProviderBase implements Configuration
 	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(ConfigurationResourceProviderBase.class);
 
-	// Private Constants
-	private static final boolean FRAMEWORK_UTIL_DETECTED;
-
-	static {
-
-		boolean frameworkUtilDetected = false;
-
-		try {
-
-			Class.forName("org.osgi.framework.FrameworkUtil");
-			frameworkUtilDetected = true;
-		}
-		catch (Throwable t) {
-
-			if (!((t instanceof NoClassDefFoundError) || (t instanceof ClassNotFoundException))) {
-
-				logger.error("An unexpected error occurred when attempting to detect OSGi:");
-				logger.error(t);
-			}
-		}
-
-		FRAMEWORK_UTIL_DETECTED = frameworkUtilDetected;
-	}
-
 	@Override
-	public abstract Collection<URI> getResources(ServletContext context);
+	public abstract Collection<URI> getResources(ServletContext servletContext);
 
-	protected Collection<URI> getResourcesPattern(String resourceFilePattern) {
+	protected Collection<URI> getResourcesPattern(String resourceFilePattern, ServletContext servletContext) {
 
 		List<URI> resourceURIs;
+		Set<Bundle> facesBundles = FacesBundleUtil.getFacesBundles(servletContext);
 
-		if (FRAMEWORK_UTIL_DETECTED) {
+		if (!facesBundles.isEmpty()) {
 
-			Bundle portletBundle = FrameworkUtil.getBundle(ConfigurationResourceProviderBase.class);
-			BundleWiring bundleWiring = portletBundle.adapt(BundleWiring.class);
-			Collection<String> resourceFilePaths = bundleWiring.listResources("META-INF/", resourceFilePattern,
-					BundleWiring.LISTRESOURCES_RECURSE);
 			resourceURIs = new ArrayList<URI>();
 
-			for (String resourceFilePath : resourceFilePaths) {
+			for (Bundle bundle : facesBundles) {
 
-				Enumeration<URL> resourceURLs = null;
+				BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
+				Collection<String> resourceFilePaths =
+						new ArrayList<String>(
+								bundleWiring.listResources("META-INF/", resourceFilePattern,
+										BundleWiring.LISTRESOURCES_RECURSE));
 
-				try {
+				if (resourceFilePattern.endsWith("faces-config.xml") && FacesBundleUtil.isThinWab(servletContext)) {
 
-					// FACES-2650 Because there may be multiple jars in our bundle, some resources may have exactly the
-					// same reourceFilePath. We need to find all the resources with this resourceFilePath in all jars.
-					resourceURLs = portletBundle.getResources(resourceFilePath);
+					String string = (String) servletContext.getAttribute("com/sun/faces/jsf-ri-runtime.xml");
+
+					if (string != null) {
+						resourceFilePaths.add("com/sun/faces/jsf-ri-runtime.xml");
+					}
 				}
-				catch (IOException ioe) {
-					logger.error(ioe);
-				}
 
-				if (resourceURLs != null) {
+				for (String resourceFilePath : resourceFilePaths) {
 
-					while (resourceURLs.hasMoreElements()) {
+					Enumeration<URL> resourceURLs = null;
 
-						try {
+					try {
 
-							URL resourceURL = resourceURLs.nextElement();
+						// FACES-2650 Because there may be multiple jars in our bundle, some resources may have exactly
+						// the same reourceFilePath. We need to find all the resources with this resourceFilePath in all
+						// jars.
+						resourceURLs = bundle.getResources(resourceFilePath);
+					}
+					catch (IOException ioe) {
+						logger.error(ioe);
+					}
 
-							if (resourceURL != null) {
+					if (resourceURLs != null) {
 
-								URI resourceURI = resourceURL.toURI();
-								resourceURIs.add(resourceURI);
+						while (resourceURLs.hasMoreElements()) {
+
+							try {
+
+								URL resourceURL = resourceURLs.nextElement();
+
+								if (resourceURL != null) {
+
+									URI resourceURI = resourceURL.toURI();
+									resourceURIs.add(resourceURI);
+								}
+								else {
+									logger.warn("URL for resourceFilePath=[{0}] is null.", resourceFilePath);
+								}
 							}
-							else {
-								logger.warn("URL for resourceFilePath=[{0}] is null.", resourceFilePath);
+							catch (URISyntaxException e) {
+								logger.error(e);
 							}
-						}
-						catch (URISyntaxException e) {
-							logger.error(e);
 						}
 					}
 				}
 			}
+
+			resourceURIs = Collections.unmodifiableList(resourceURIs);
 		}
 		else {
 
