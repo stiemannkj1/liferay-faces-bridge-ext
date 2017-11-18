@@ -18,6 +18,8 @@ import java.util.Collection;
 
 import javax.servlet.ServletContext;
 
+import com.liferay.faces.osgi.util.FacesBundleUtil;
+
 import com.sun.faces.spi.FacesConfigResourceProvider;
 
 
@@ -39,7 +41,7 @@ public class FacesConfigResourceProviderLiferayImpl extends ConfigurationResourc
 
 		String facesConfigPattern = "*.faces-config.xml";
 
-		if (FacesBundleUtil.isThinWab(servletContext)) {
+		if (FacesBundleUtil.isCurrentWarThinWab()) {
 
 			// Get all faces-config.xml files and *.faces-config.xml files.
 			facesConfigPattern = "*faces-config.xml";

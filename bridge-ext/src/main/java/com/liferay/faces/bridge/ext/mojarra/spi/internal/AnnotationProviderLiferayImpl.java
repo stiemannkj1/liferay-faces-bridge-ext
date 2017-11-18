@@ -1,24 +1,18 @@
 /**
  * Copyright (c) 2000-2017 Liferay, Inc. All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
  */
 package com.liferay.faces.bridge.ext.mojarra.spi.internal;
 
-import com.liferay.faces.util.logging.Logger;
-import com.liferay.faces.util.logging.LoggerFactory;
-import com.sun.faces.config.FacesInitializer;
-import com.sun.faces.spi.AnnotationProvider;
 import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.net.URL;
@@ -29,13 +23,30 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.component.FacesComponent;
+import javax.faces.component.behavior.FacesBehavior;
+import javax.faces.convert.FacesConverter;
+import javax.faces.event.NamedEvent;
+import javax.faces.render.FacesBehaviorRenderer;
+import javax.faces.render.FacesRenderer;
+import javax.faces.validator.FacesValidator;
 import javax.servlet.annotation.HandlesTypes;
+
 import org.osgi.framework.Bundle;
 import org.osgi.framework.wiring.BundleWiring;
 
+import com.liferay.faces.osgi.util.FacesBundleUtil;
+import com.liferay.faces.util.logging.Logger;
+import com.liferay.faces.util.logging.LoggerFactory;
+
+import com.sun.faces.config.FacesInitializer;
+import com.sun.faces.spi.AnnotationProvider;
+
+
 /**
- *
- * @author Kyle Stiemann
+ * @author  Kyle Stiemann
  */
 public class AnnotationProviderLiferayImpl extends AnnotationProvider {
 
@@ -51,12 +62,17 @@ public class AnnotationProviderLiferayImpl extends AnnotationProvider {
 
 		try {
 
-			Class<?> annotationScanningServletContainerInitializerClass = Class.forName(
-					FacesInitializer.class.getName());
+			Class<?> annotationScanningServletContainerInitializerClass = Class.forName(FacesInitializer.class
+					.getName());
 			HandlesTypes handledTypes = annotationScanningServletContainerInitializerClass.getAnnotation(
 					HandlesTypes.class);
 			Class[] annotationsHandledByMojarraArray = handledTypes.value();
 			annotationsHandledByMojarra.addAll(Arrays.<Class<?>>asList(annotationsHandledByMojarraArray));
+
+			// This list of classes was obtained from the AnnotationProvider JavaDoc.
+			annotationsHandledByMojarra.addAll(Arrays.<Class<?>>asList(FacesComponent.class, FacesConverter.class,
+					FacesRenderer.class, FacesValidator.class, ManagedBean.class, NamedEvent.class, FacesBehavior.class,
+					FacesBehaviorRenderer.class));
 		}
 		catch (ClassNotFoundException e) {
 			logger.error(e);
@@ -81,20 +97,22 @@ public class AnnotationProviderLiferayImpl extends AnnotationProvider {
 
 		Map<Class<? extends Annotation>, Set<Class<?>>> annotatedClasses;
 
-		if (FacesBundleUtil.isThinWab(sc)) {
+		// Annotation scanning works correctly in thick wabs. TODO test
+		if (FacesBundleUtil.isCurrentWarThinWab()) {
 
-			Set<Bundle> facesBundles = FacesBundleUtil.getFacesBundles(sc);
+			Map<String, Bundle> facesBundles = FacesBundleUtil.getFacesBundles(sc);
+			Collection<Bundle> bundles = facesBundles.values();
 			annotatedClasses = new HashMap<Class<? extends Annotation>, Set<Class<?>>>();
 
 			for (Class<?> annotation : ANNOTATIONS_HANDLED_BY_MOJARRA) {
 				annotatedClasses.put((Class<? extends Annotation>) annotation, new HashSet<Class<?>>());
 			}
 
-			for (Bundle bundle : facesBundles) {
+			for (Bundle bundle : bundles) {
 
 				BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
 				Collection<String> classFilePaths = bundleWiring.listResources("/", "*.class",
-					BundleWiring.LISTRESOURCES_RECURSE);
+						BundleWiring.LISTRESOURCES_RECURSE);
 
 				for (String classFilePath : classFilePaths) {
 

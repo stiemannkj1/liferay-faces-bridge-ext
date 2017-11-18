@@ -22,17 +22,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletContext;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.wiring.BundleWiring;
 
+import com.liferay.faces.osgi.util.FacesBundleUtil;
 import com.liferay.faces.util.logging.Logger;
 import com.liferay.faces.util.logging.LoggerFactory;
 
 import com.sun.faces.spi.ConfigurationResourceProvider;
-import java.util.Set;
 
 
 /**
@@ -49,28 +50,18 @@ public abstract class ConfigurationResourceProviderBase implements Configuration
 	protected Collection<URI> getResourcesPattern(String resourceFilePattern, ServletContext servletContext) {
 
 		List<URI> resourceURIs;
-		Set<Bundle> facesBundles = FacesBundleUtil.getFacesBundles(servletContext);
+		Map<String, Bundle> facesBundles = FacesBundleUtil.getFacesBundles(servletContext);
 
 		if (!facesBundles.isEmpty()) {
 
+			Collection<Bundle> bundles = facesBundles.values();
 			resourceURIs = new ArrayList<URI>();
 
-			for (Bundle bundle : facesBundles) {
+			for (Bundle bundle : bundles) {
 
 				BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
-				Collection<String> resourceFilePaths =
-						new ArrayList<String>(
-								bundleWiring.listResources("META-INF/", resourceFilePattern,
-										BundleWiring.LISTRESOURCES_RECURSE));
-
-				if (resourceFilePattern.endsWith("faces-config.xml") && FacesBundleUtil.isThinWab(servletContext)) {
-
-					String string = (String) servletContext.getAttribute("com/sun/faces/jsf-ri-runtime.xml");
-
-					if (string != null) {
-						resourceFilePaths.add("com/sun/faces/jsf-ri-runtime.xml");
-					}
-				}
+				Collection<String> resourceFilePaths = new ArrayList<String>(bundleWiring.listResources("META-INF/",
+							resourceFilePattern, BundleWiring.LISTRESOURCES_RECURSE));
 
 				for (String resourceFilePath : resourceFilePaths) {
 
