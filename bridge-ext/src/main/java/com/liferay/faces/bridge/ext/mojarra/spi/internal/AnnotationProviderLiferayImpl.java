@@ -100,15 +100,14 @@ public class AnnotationProviderLiferayImpl extends AnnotationProvider {
 		// Annotation scanning works correctly in thick wabs. TODO test
 		if (FacesBundleUtil.isCurrentWarThinWab()) {
 
-			Map<String, Bundle> facesBundles = FacesBundleUtil.getFacesBundles(sc);
-			Collection<Bundle> bundles = facesBundles.values();
+			Collection<Bundle> facesBundles = FacesBundleUtil.getFacesBundles(sc);
 			annotatedClasses = new HashMap<Class<? extends Annotation>, Set<Class<?>>>();
 
 			for (Class<?> annotation : ANNOTATIONS_HANDLED_BY_MOJARRA) {
 				annotatedClasses.put((Class<? extends Annotation>) annotation, new HashSet<Class<?>>());
 			}
 
-			for (Bundle bundle : bundles) {
+			for (Bundle bundle : facesBundles) {
 
 				BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
 				Collection<String> classFilePaths = bundleWiring.listResources("/", "*.class",

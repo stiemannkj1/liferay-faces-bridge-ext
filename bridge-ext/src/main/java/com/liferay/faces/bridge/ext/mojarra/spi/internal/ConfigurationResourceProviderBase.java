@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.ServletContext;
 
@@ -50,14 +49,13 @@ public abstract class ConfigurationResourceProviderBase implements Configuration
 	protected Collection<URI> getResourcesPattern(String resourceFilePattern, ServletContext servletContext) {
 
 		List<URI> resourceURIs;
-		Map<String, Bundle> facesBundles = FacesBundleUtil.getFacesBundles(servletContext);
+		Collection<Bundle> facesBundles = FacesBundleUtil.getFacesBundles(servletContext);
 
 		if (!facesBundles.isEmpty()) {
 
-			Collection<Bundle> bundles = facesBundles.values();
 			resourceURIs = new ArrayList<URI>();
 
-			for (Bundle bundle : bundles) {
+			for (Bundle bundle : facesBundles) {
 
 				BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
 				Collection<String> resourceFilePaths = new ArrayList<String>(bundleWiring.listResources("META-INF/",
