@@ -11,7 +11,7 @@
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
  * details.
  */
-package com.liferay.faces.bridge.ext.mojarra.servlet;
+package com.liferay.faces.bridge.ext.osgi.mojarra.servlet;
 
 import java.util.EventListener;
 import java.util.Set;
@@ -19,8 +19,7 @@ import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
-import com.liferay.faces.osgi.util.OSGiClassProviderUtil;
-
+import com.liferay.faces.util.osgi.OSGiClassProviderUtil;
 
 /**
  * @author  Kyle Stiemann
