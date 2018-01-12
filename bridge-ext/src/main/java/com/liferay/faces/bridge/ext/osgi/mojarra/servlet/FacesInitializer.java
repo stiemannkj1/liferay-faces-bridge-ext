@@ -19,7 +19,7 @@ import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
-import com.liferay.faces.util.osgi.OSGiClassProviderUtil;
+import com.liferay.faces.util.osgi.OSGiClassLoaderUtil;
 
 /**
  * @author  Kyle Stiemann
@@ -35,7 +35,7 @@ public final class FacesInitializer extends com.sun.faces.config.FacesInitialize
 
 			Class<?> thisClass = this.getClass();
 			Class<? extends EventListener> bridgeSessionListenerClass = (Class<? extends EventListener>)
-				OSGiClassProviderUtil.classForName("com.liferay.faces.bridge.servlet.BridgeSessionListener",
+				OSGiClassLoaderUtil.classForName("com.liferay.faces.bridge.servlet.BridgeSessionListener",
 					servletContext, thisClass);
 			servletContext.addListener(bridgeSessionListenerClass);
 		}
