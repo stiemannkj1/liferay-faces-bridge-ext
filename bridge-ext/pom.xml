@@ -198,10 +198,16 @@
 				<artifactId>bnd-maven-plugin</artifactId>
 				<version>${bnd.version}</version>
 				<configuration>
-					<!-- Consult individual package-info.java files to determine Export-Packages and versions. -->
 					<bnd>
 						<![CDATA[
+							# Consult individual package-info.java files to determine Export-Packages and versions.
 							-exportcontents: ${packages;VERSIONED}
+							# javax.el is automatically imported with the following versions:
+							# javax.el;version="[2.2.0,3.0.0)", but versions 3.0.0+ are also valid.
+							Import-Package: \
+								!com.liferay.faces.bridge.ext,\
+								!com.liferay.faces.bridge.ext.*,\
+								*
 						]]>
 					</bnd>
 				</configuration>
