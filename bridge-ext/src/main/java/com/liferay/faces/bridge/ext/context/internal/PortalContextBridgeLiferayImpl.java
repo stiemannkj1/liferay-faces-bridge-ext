@@ -40,10 +40,10 @@ public class PortalContextBridgeLiferayImpl extends PortalContextBridgeLiferayCo
 	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(PortalContextBridgeLiferayImpl.class);
 
-	// Private Data Members
-	private String addToHeadSupport;
-	private String namespacedParametersRequired;
-	private PortalContext wrappedPortalContext;
+	// Private Final Data Members
+	private final String addToHeadSupport;
+	private final String namespacedParametersRequired;
+	private final PortalContext wrappedPortalContext;
 
 	public PortalContextBridgeLiferayImpl(PortletRequest portletRequest) {
 
@@ -67,9 +67,15 @@ public class PortalContextBridgeLiferayImpl extends PortalContextBridgeLiferayCo
 		if (!(isAjaxRequest(portletRequest) || runtimePortlet || wsrpPortlet || stateExclusive)) {
 			this.addToHeadSupport = "true";
 		}
+		else {
+			this.addToHeadSupport = null;
+		}
 
 		if (isLiferayNamespacingParameters(portletRequest)) {
 			this.namespacedParametersRequired = "true";
+		}
+		else {
+			this.namespacedParametersRequired = null;
 		}
 	}
 

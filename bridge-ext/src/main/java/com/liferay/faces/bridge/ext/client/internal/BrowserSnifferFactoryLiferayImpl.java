@@ -33,8 +33,8 @@ public class BrowserSnifferFactoryLiferayImpl extends BrowserSnifferFactory impl
 	// serialVersionUID
 	private static final long serialVersionUID = 1618487876717568315L;
 
-	// Private Data Members
-	private BrowserSnifferFactory wrappedBrowserSnifferFactory;
+	// Private Final Data Members
+	private final BrowserSnifferFactory wrappedBrowserSnifferFactory;
 
 	public BrowserSnifferFactoryLiferayImpl(BrowserSnifferFactory browserSnifferFactory) {
 		this.wrappedBrowserSnifferFactory = browserSnifferFactory;

@@ -27,9 +27,9 @@ public class ScriptsEncoderFactoryLiferayImpl extends ScriptsEncoderFactory impl
 	// serialVersionUID
 	private static final long serialVersionUID = 6500965768943686133L;
 
-	// Private Data Members
-	private ScriptsEncoder scriptsEncoder = new ScriptsEncoderLiferayImpl();
-	private ScriptsEncoderFactory wrappedScriptsEncoderFactory;
+	// Private Final Data Members
+	private final ScriptsEncoder scriptsEncoder = new ScriptsEncoderLiferayImpl();
+	private final ScriptsEncoderFactory wrappedScriptsEncoderFactory;
 
 	public ScriptsEncoderFactoryLiferayImpl(ScriptsEncoderFactory ScriptsEncoderFactory) {
 		this.wrappedScriptsEncoderFactory = ScriptsEncoderFactory;

@@ -33,11 +33,10 @@ public class BridgeURLFactoryLiferayImpl extends BridgeURLFactoryLiferayCompatIm
 	private static final long serialVersionUID = 7863243661979446762L;
 
 	// Private Data Members
-	private BridgeURLFactory wrappedBridgeURLFactory;
+	private final BridgeURLFactory wrappedBridgeURLFactory;
 
 	public BridgeURLFactoryLiferayImpl(BridgeURLFactory bridgeURLFactory) {
 		this.wrappedBridgeURLFactory = bridgeURLFactory;
-		BridgeExtDependencyVerifier.verify();
 	}
 
 	@Override

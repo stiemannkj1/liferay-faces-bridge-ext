@@ -21,7 +21,11 @@ import javax.portlet.BaseURL;
 /**
  * @author  Neil Griffin
  */
-public class LiferayBaseURLUtil {
+public final class LiferayBaseURLUtil {
+
+	private LiferayBaseURLUtil() {
+		throw new AssertionError();
+	}
 
 	public static void removeParameter(BaseURL baseURL, String name) {
 

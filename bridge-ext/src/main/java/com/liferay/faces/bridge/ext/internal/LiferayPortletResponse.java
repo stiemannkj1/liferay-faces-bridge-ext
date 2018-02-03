@@ -34,8 +34,8 @@ public class LiferayPortletResponse {
 	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(LiferayPortletResponse.class);
 
-	// Private Data Members
-	private PortletResponse wrappedPortletResponse;
+	// Private Final Data Members
+	private final PortletResponse wrappedPortletResponse;
 
 	public LiferayPortletResponse(PortletResponse portletResponse) {
 

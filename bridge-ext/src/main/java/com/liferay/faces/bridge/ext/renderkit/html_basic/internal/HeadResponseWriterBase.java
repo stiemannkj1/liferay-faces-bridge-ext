@@ -39,8 +39,10 @@ public abstract class HeadResponseWriterBase extends ResponseWriterWrapper {
 	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(HeadResponseWriterBase.class);
 
+	// Private Fanal Data Members
+	private final ResponseWriter wrappedResponseWriter;
+
 	// Private Data Members
-	private ResponseWriter wrappedResponseWriter;
 	private Node currentNode;
 	private Stack<UIComponent> componentResourceStack;
 	private boolean titleElement = false;

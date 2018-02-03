@@ -27,9 +27,9 @@ public class ResourceValidatorFactoryLiferayImpl extends ResourceValidatorFactor
 	// serialVersionUID
 	private static final long serialVersionUID = 343158871040962167L;
 
-	// Private Data Members
-	private ResourceValidator resourceValidator;
-	private ResourceValidatorFactory wrappedResourceValidatorFactory;
+	// Private Final Data Members
+	private final ResourceValidator resourceValidator;
+	private final ResourceValidatorFactory wrappedResourceValidatorFactory;
 
 	public ResourceValidatorFactoryLiferayImpl(ResourceValidatorFactory resourceValidatorFactory) {
 

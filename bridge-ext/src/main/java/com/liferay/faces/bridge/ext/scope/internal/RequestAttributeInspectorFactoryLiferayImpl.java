@@ -32,8 +32,8 @@ public class RequestAttributeInspectorFactoryLiferayImpl extends RequestAttribut
 	// serialVersionUID
 	private static final long serialVersionUID = 7464890712727594643L;
 
-	// Private Data Members
-	private RequestAttributeInspectorFactory wrappedRequestAttributeInspectorFactory;
+	// Private Final Data Members
+	private final RequestAttributeInspectorFactory wrappedRequestAttributeInspectorFactory;
 
 	public RequestAttributeInspectorFactoryLiferayImpl(
 		RequestAttributeInspectorFactory requestAttributeInspectorFactory) {
