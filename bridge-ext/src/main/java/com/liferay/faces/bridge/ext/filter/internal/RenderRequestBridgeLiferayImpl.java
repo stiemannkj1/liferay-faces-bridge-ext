@@ -39,9 +39,9 @@ public class RenderRequestBridgeLiferayImpl extends RenderRequestWrapper {
 	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(RenderRequestBridgeLiferayImpl.class);
 
-	// Private Data Members
-	private PortalContext portalContext;
-	private LiferayPortletRequest liferayPortletRequest;
+	// Private Final Data Members
+	private final PortalContext portalContext;
+	private final LiferayPortletRequest liferayPortletRequest;
 
 	public RenderRequestBridgeLiferayImpl(RenderRequest renderRequest, String responseNamespace,
 		PortletConfig portletConfig, PortalContext portalContext) {

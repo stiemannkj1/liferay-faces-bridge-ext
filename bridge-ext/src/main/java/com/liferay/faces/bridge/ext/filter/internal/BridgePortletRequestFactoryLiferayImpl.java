@@ -39,8 +39,8 @@ public class BridgePortletRequestFactoryLiferayImpl extends BridgePortletRequest
 	// serialVersionUID
 	private static final long serialVersionUID = 3857140152055099132L;
 
-	// Private Members
-	private BridgePortletRequestFactory wrappedBridgePortletRequestFactory;
+	// Private Final Data Members
+	private final BridgePortletRequestFactory wrappedBridgePortletRequestFactory;
 
 	public BridgePortletRequestFactoryLiferayImpl(BridgePortletRequestFactory wrappedBridgePortletRequestFactory) {
 		this.wrappedBridgePortletRequestFactory = wrappedBridgePortletRequestFactory;

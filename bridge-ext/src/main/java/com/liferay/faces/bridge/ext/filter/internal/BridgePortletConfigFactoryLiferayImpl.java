@@ -29,7 +29,7 @@ public class BridgePortletConfigFactoryLiferayImpl extends BridgePortletConfigFa
 	private static final long serialVersionUID = 1452826393887411234L;
 
 	// Private Data Members
-	private BridgePortletConfigFactory wrappedBridgePortletConfigFactory;
+	private final BridgePortletConfigFactory wrappedBridgePortletConfigFactory;
 
 	public BridgePortletConfigFactoryLiferayImpl(BridgePortletConfigFactory bridgePortletConfigFactory) {
 		this.wrappedBridgePortletConfigFactory = bridgePortletConfigFactory;

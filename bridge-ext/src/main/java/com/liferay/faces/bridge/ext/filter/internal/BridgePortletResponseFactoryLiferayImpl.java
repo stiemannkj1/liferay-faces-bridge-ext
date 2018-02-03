@@ -39,7 +39,7 @@ public class BridgePortletResponseFactoryLiferayImpl extends BridgePortletRespon
 	private static final long serialVersionUID = 3840349386331501262L;
 
 	// Private Data Members
-	private BridgePortletResponseFactory wrappedBridgePortletResponseFactory;
+	private final BridgePortletResponseFactory wrappedBridgePortletResponseFactory;
 
 	public BridgePortletResponseFactoryLiferayImpl(BridgePortletResponseFactory bridgePortletResponseFactory) {
 		this.wrappedBridgePortletResponseFactory = bridgePortletResponseFactory;

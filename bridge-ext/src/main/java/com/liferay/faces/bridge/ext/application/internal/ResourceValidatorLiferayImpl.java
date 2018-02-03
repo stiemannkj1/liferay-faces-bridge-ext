@@ -43,8 +43,8 @@ public class ResourceValidatorLiferayImpl extends ResourceValidatorWrapper imple
 	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(ResourceValidatorLiferayImpl.class);
 
-	// Private Data Members
-	private ResourceValidator wrappedResourceValidator;
+	// Private Final Data Members
+	private final ResourceValidator wrappedResourceValidator;
 
 	public ResourceValidatorLiferayImpl(ResourceValidator resourceValidator) {
 		this.wrappedResourceValidator = resourceValidator;

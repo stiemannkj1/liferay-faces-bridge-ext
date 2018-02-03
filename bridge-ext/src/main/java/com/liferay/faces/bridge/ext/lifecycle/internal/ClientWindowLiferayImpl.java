@@ -41,9 +41,11 @@ public class ClientWindowLiferayImpl extends ClientWindowWrapper {
 	private static final String CLIENT_WINDOW_COUNTER_KEY =
 		"com.liferay.faces.bridge.lifecycle.CLIENT_WINDOW_COUNTER_KEY";
 
+	// Private Final Data Members
+	private final ClientWindow wrappedClientWindow;
+
 	// Private Data Members
 	private String id;
-	private ClientWindow wrappedClientWindow;
 
 	public ClientWindowLiferayImpl(ClientWindow clientWindow) {
 		wrappedClientWindow = clientWindow;

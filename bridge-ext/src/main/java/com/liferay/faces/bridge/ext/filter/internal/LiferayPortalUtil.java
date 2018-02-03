@@ -25,10 +25,14 @@ import com.liferay.portal.kernel.util.PortalUtil;
  * This class provides access to the com.liferay.portal.util.PortalUtil static utility class via reflection in order to
  * avoid a compile-time dependency.
  */
-public class LiferayPortalUtil {
+public final class LiferayPortalUtil {
 
 	// Logger
 	private static final Logger logger = LoggerFactory.getLogger(LiferayPortalUtil.class);
+
+	private LiferayPortalUtil() {
+		throw new AssertionError();
+	}
 
 	public static String getPortletId(PortletRequest portletRequest) {
 		String portletId = null;

@@ -48,12 +48,12 @@ public class LiferayPortletRequest {
 	private static final Logger logger = LoggerFactory.getLogger(LiferayPortletRequest.class);
 
 	// Private Data Members
-	private boolean distinctRequestScopedManagedBeans;
-	private LiferayHttpServletRequest liferayHttpServletRequest;
-	private Portlet portlet;
-	private List<String> propertyNameList;
-	private String responseNamespace;
-	private PortletRequest wrappedPortletRequest;
+	private final boolean distinctRequestScopedManagedBeans;
+	private final LiferayHttpServletRequest liferayHttpServletRequest;
+	private final Portlet portlet;
+	private final List<String> propertyNameList;
+	private final String responseNamespace;
+	private final PortletRequest wrappedPortletRequest;
 
 	public LiferayPortletRequest(PortletRequest portletRequest, String responseNamespace, PortletConfig portletConfig) {
 
@@ -66,30 +66,37 @@ public class LiferayPortletRequest {
 		}
 
 		this.wrappedPortletRequest = portletRequest;
-
 		this.distinctRequestScopedManagedBeans = LiferayPortletConfigParam.DistinctRequestScopedManagedBeans
 			.getBooleanValue(portletConfig);
+
+		Portlet portlet = null;
 
 		try {
 			Method method = wrappedPortletRequest.getClass().getMethod(METHOD_NAME_GET_PORTLET, (Class[]) null);
 
-			this.portlet = (Portlet) method.invoke(wrappedPortletRequest, (Object[]) null);
+			portlet = (Portlet) method.invoke(wrappedPortletRequest, (Object[]) null);
 		}
 		catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
 
+		this.portlet = portlet;
+
+		LiferayHttpServletRequest liferayHttpServletRequest = null;
+
 		try {
 			Method method = wrappedPortletRequest.getClass().getMethod(METHOD_NAME_GET_ORIGINAL_HTTP_SERVLET_REQUEST,
 					(Class[]) null);
-			this.liferayHttpServletRequest = new LiferayHttpServletRequest((HttpServletRequest) method.invoke(
+			liferayHttpServletRequest = new LiferayHttpServletRequest((HttpServletRequest) method.invoke(
 						wrappedPortletRequest, (Object[]) null));
 		}
 		catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
 
-		this.propertyNameList = new ArrayList<String>();
+		this.liferayHttpServletRequest = liferayHttpServletRequest;
+
+		List<String> propertyNameList = new ArrayList<String>();
 
 		boolean foundIfModifiedSince = false;
 		boolean foundUserAgent = false;
@@ -135,8 +142,7 @@ public class LiferayPortletRequest {
 			}
 		}
 
-		this.distinctRequestScopedManagedBeans = LiferayPortletConfigParam.DistinctRequestScopedManagedBeans
-			.getBooleanValue(portletConfig);
+		this.propertyNameList = Collections.unmodifiableList(propertyNameList);
 		this.responseNamespace = responseNamespace;
 	}
 

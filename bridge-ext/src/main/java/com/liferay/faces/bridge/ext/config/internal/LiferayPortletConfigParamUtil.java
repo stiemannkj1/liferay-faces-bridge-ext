@@ -24,7 +24,11 @@ import com.liferay.faces.util.helper.IntegerHelper;
 /**
  * @author  Neil Griffin
  */
-public class LiferayPortletConfigParamUtil {
+public final class LiferayPortletConfigParamUtil {
+
+	private LiferayPortletConfigParamUtil() {
+		throw new AssertionError();
+	}
 
 	public static boolean getBooleanValue(PortletConfig portletConfig, String name, String alternateName,
 		boolean defaultBooleanValue) {

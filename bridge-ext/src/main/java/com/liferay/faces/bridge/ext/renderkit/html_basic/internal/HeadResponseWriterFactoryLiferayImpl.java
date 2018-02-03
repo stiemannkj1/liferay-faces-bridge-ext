@@ -29,8 +29,8 @@ public class HeadResponseWriterFactoryLiferayImpl extends HeadResponseWriterFact
 	// serialVersionUID
 	private static final long serialVersionUID = 2227130669035456473L;
 
-	// Private Data Members
-	private HeadResponseWriterFactory wrappedHeadResponseWriterFactory;
+	// Private Final Data Members
+	private final HeadResponseWriterFactory wrappedHeadResponseWriterFactory;
 
 	public HeadResponseWriterFactoryLiferayImpl(HeadResponseWriterFactory headResponseWriterFactory) {
 		this.wrappedHeadResponseWriterFactory = headResponseWriterFactory;

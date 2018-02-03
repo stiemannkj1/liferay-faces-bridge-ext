@@ -26,8 +26,8 @@ import javax.faces.render.RenderKitWrapper;
  */
 public class RenderKitLiferayImpl extends RenderKitWrapper {
 
-	// Private Data Members
-	private RenderKit wrappedRenderKit;
+	// Private Final Data Members
+	private final RenderKit wrappedRenderKit;
 
 	public RenderKitLiferayImpl(RenderKit wrappedRenderKit) {
 		this.wrappedRenderKit = wrappedRenderKit;

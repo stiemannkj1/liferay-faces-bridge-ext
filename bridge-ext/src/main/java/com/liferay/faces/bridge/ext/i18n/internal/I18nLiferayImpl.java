@@ -34,8 +34,8 @@ public class I18nLiferayImpl extends I18nWrapper implements Serializable {
 	// serialVersionUID
 	private static final long serialVersionUID = 2328392557312272111L;
 
-	// Private Data Members
-	private I18n wrappedI18n;
+	// Private Final Data Members
+	private final I18n wrappedI18n;
 
 	public I18nLiferayImpl(I18n i18n) {
 		this.wrappedI18n = i18n;
