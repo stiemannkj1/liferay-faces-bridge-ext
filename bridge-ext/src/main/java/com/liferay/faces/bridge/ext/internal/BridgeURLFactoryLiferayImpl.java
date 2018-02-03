@@ -37,7 +37,6 @@ public class BridgeURLFactoryLiferayImpl extends BridgeURLFactoryLiferayCompatIm
 
 	public BridgeURLFactoryLiferayImpl(BridgeURLFactory bridgeURLFactory) {
 		this.wrappedBridgeURLFactory = bridgeURLFactory;
-		BridgeExtDependencyVerifier.verify();
 	}
 
 	@Override

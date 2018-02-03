@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.render.RenderKit;
 import javax.portlet.PortletMode;
@@ -31,8 +32,8 @@ import javax.portlet.WindowState;
 import com.liferay.faces.util.helper.StringHelper;
 import com.liferay.faces.util.logging.Logger;
 import com.liferay.faces.util.logging.LoggerFactory;
-import com.liferay.faces.util.product.Product;
-import com.liferay.faces.util.product.ProductFactory;
+import com.liferay.faces.util.product.info.ProductInfo;
+import com.liferay.faces.util.product.info.ProductInfoFactory;
 
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.model.Portlet;
@@ -69,7 +70,6 @@ public abstract class LiferayURLGeneratorBaseImpl implements LiferayURLGenerator
 	private static final String DO_AS_GROUP_ID = "doAsGroupId";
 	private static final String DO_AS_USER_ID = "doAsUserId";
 	private static final String DO_AS_USER_LANGUAGE_ID = "doAsUserLanguageId";
-	private static final int LIFERAY_BUILD_NUMBER = ProductFactory.getProduct(Product.Name.LIFERAY_PORTAL).getBuildId();
 	private static final String P_AUTH = "p_auth";
 	private static final String P_L_ID = "p_l_id";
 	private static final String P_P_AUTH = "p_p_auth";
@@ -224,6 +224,11 @@ public abstract class LiferayURLGeneratorBaseImpl implements LiferayURLGenerator
 			if (portletAuthToken != null) {
 
 				boolean addPortletAuthToken = true;
+				FacesContext facesContext = FacesContext.getCurrentInstance();
+				final ExternalContext externalContext = facesContext.getExternalContext();
+				final ProductInfo LIFERAY_PORTAL = ProductInfoFactory.getProductInfoInstance(externalContext,
+						ProductInfo.Name.LIFERAY_PORTAL);
+				final int LIFERAY_BUILD_NUMBER = LIFERAY_PORTAL.getBuildId();
 
 				if ((LIFERAY_BUILD_NUMBER < 6102) || ((LIFERAY_BUILD_NUMBER > 6102) && (LIFERAY_BUILD_NUMBER < 6130))) {
 
@@ -231,8 +236,7 @@ public abstract class LiferayURLGeneratorBaseImpl implements LiferayURLGenerator
 					// PortletURLImpl.addPortletAuthToken(StringBundle, Key) method to add the p_p_auth parameter to
 					// URLs for portlets when add-default-resource=false. It is therefore necessary to check that
 					// add-default-resource=true before adding the p_p_auth parameter to the URL.
-					FacesContext facesContext = FacesContext.getCurrentInstance();
-					PortletRequest portletRequest = (PortletRequest) facesContext.getExternalContext().getRequest();
+					PortletRequest portletRequest = (PortletRequest) externalContext.getRequest();
 					String portletId = (String) portletRequest.getAttribute(WebKeys.PORTLET_ID);
 					ThemeDisplay themeDisplay = (ThemeDisplay) portletRequest.getAttribute(WebKeys.THEME_DISPLAY);
 

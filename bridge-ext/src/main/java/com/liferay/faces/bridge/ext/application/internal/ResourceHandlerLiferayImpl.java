@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2017 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2018 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,8 +24,9 @@ import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 
 import com.liferay.faces.bridge.ext.config.internal.LiferayPortletConfigParam;
-import com.liferay.faces.util.product.Product;
-import com.liferay.faces.util.product.ProductFactory;
+import com.liferay.faces.util.factory.FactoryExtensionFinder;
+import com.liferay.faces.util.product.info.ProductInfo;
+import com.liferay.faces.util.product.info.ProductInfoFactory;
 
 
 /**
@@ -34,16 +35,11 @@ import com.liferay.faces.util.product.ProductFactory;
 public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 
 	// Private Constants
-	private static final boolean BOOTSFACES_DETECTED = ProductFactory.getProduct(Product.Name.BOOTSFACES).isDetected();
 	private static final Set<String> BOOTSFACES_JQUERY_PLUGIN_JS_RESOURCES;
-	private static final boolean BUTTERFACES_DETECTED = ProductFactory.getProduct(Product.Name.BUTTERFACES)
-		.isDetected();
 	private static final Set<String> BUTTERFACES_DIST_BOWER_JQUERY_PLUGIN_JS_RESOURCES;
 	private static final Set<String> BUTTERFACES_DIST_BUNDLE_JS_JQUERY_PLUGIN_JS_RESOURCES;
 	private static final Set<String> BUTTERFACES_EXTERNAL_JQUERY_PLUGIN_JS_RESOURCES;
-	private static final boolean PRIMEFACES_DETECTED = ProductFactory.getProduct(Product.Name.PRIMEFACES).isDetected();
 	private static final Set<String> PRIMEFACES_JQUERY_PLUGIN_JS_RESOURCES;
-	private static final boolean RICHFACES_DETECTED = ProductFactory.getProduct(Product.Name.RICHFACES).isDetected();
 
 	static {
 
@@ -107,11 +103,18 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 		// containg "typeof\\s+define\\s*=(=+)\\s*[\"']function[\"']|[\"']function[\"']\\s*=(=+)\\s*typeof\\s+define".
 		Set<String> primefacesJQueryPluginResources = new HashSet<String>();
 		primefacesJQueryPluginResources.add("diagram/diagram.js");
+		primefacesJQueryPluginResources.add("fileupload/0-jquery.iframe-transport.js");
+		primefacesJQueryPluginResources.add("fileupload/1-jquery.fileupload.js");
 		primefacesJQueryPluginResources.add("fileupload/fileupload.js");
 		primefacesJQueryPluginResources.add("inputnumber/0-autoNumeric.js");
 		primefacesJQueryPluginResources.add("inputnumber/inputnumber.js");
+		primefacesJQueryPluginResources.add("jquery/jquery.autosize.js");
+		primefacesJQueryPluginResources.add("jquery/jquery.cookie.js");
 		primefacesJQueryPluginResources.add("jquery/jquery-plugins.js");
 		primefacesJQueryPluginResources.add("jquery/jquery.js");
+		primefacesJQueryPluginResources.add("jquery/jquery.maskedinput.js");
+		primefacesJQueryPluginResources.add("jquery/jquery.ui.js");
+		primefacesJQueryPluginResources.add("jquery/jquery.ui.timepicker.js");
 		primefacesJQueryPluginResources.add("knob/1-jquery.knob.js");
 		primefacesJQueryPluginResources.add("knob/knob.js");
 		primefacesJQueryPluginResources.add("mobile/jquery-mobile.js");
@@ -121,6 +124,7 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 		primefacesJQueryPluginResources.add("push/push.js");
 		primefacesJQueryPluginResources.add("raphael/raphael.js");
 		primefacesJQueryPluginResources.add("schedule/schedule.js");
+		primefacesJQueryPluginResources.add("socket/0-atmosphere.js");
 		primefacesJQueryPluginResources.add("texteditor/texteditor.js");
 		primefacesJQueryPluginResources.add("touch/touchswipe.js");
 		PRIMEFACES_JQUERY_PLUGIN_JS_RESOURCES = Collections.unmodifiableSet(primefacesJQueryPluginResources);
@@ -129,7 +133,7 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 	// Private Data Members
 	private ResourceHandler wrappedResourceHandler;
 
-	// Final Data Members
+	// Private Final Data Members
 	private final Set<String> disabledAMDLoaderResources;
 
 	public ResourceHandlerLiferayImpl(ResourceHandler wrappedResourceHandler) {
@@ -250,12 +254,18 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 
 	private boolean isJQueryPluginJSResource(String resourceLibrary, String resourceName) {
 
-		boolean bootsFacesJQueryPluginJSResource = BOOTSFACES_DETECTED && "bsf".equals(resourceLibrary) &&
+		FacesContext startupFacesContext = FacesContext.getCurrentInstance();
+		ExternalContext externalContext = startupFacesContext.getExternalContext();
+		ProductInfoFactory productInfoFactory = (ProductInfoFactory) FactoryExtensionFinder.getFactory(externalContext,
+				ProductInfoFactory.class);
+		final ProductInfo BOOTSFACES = productInfoFactory.getProductInfo(ProductInfo.Name.BOOTSFACES);
+		boolean bootsFacesJQueryPluginJSResource = BOOTSFACES.isDetected() && "bsf".equals(resourceLibrary) &&
 			BOOTSFACES_JQUERY_PLUGIN_JS_RESOURCES.contains(resourceName);
 
 		boolean butterFacesJQueryPluginJSResource = false;
+		final ProductInfo BUTTERFACES = productInfoFactory.getProductInfo(ProductInfo.Name.BUTTERFACES);
 
-		if (BUTTERFACES_DETECTED && (resourceLibrary != null)) {
+		if (BUTTERFACES.isDetected() && (resourceLibrary != null)) {
 
 			butterFacesJQueryPluginJSResource = (resourceLibrary.equals("butterfaces-dist-bower") &&
 					BUTTERFACES_DIST_BOWER_JQUERY_PLUGIN_JS_RESOURCES.contains(resourceName)) ||
@@ -266,13 +276,15 @@ public class ResourceHandlerLiferayImpl extends ResourceHandlerWrapper {
 
 		}
 
-		boolean primeFacesJQueryPluginJSResource = PRIMEFACES_DETECTED &&
+		final ProductInfo PRIMEFACES = productInfoFactory.getProductInfo(ProductInfo.Name.PRIMEFACES);
+		boolean primeFacesJQueryPluginJSResource = PRIMEFACES.isDetected() &&
 			((resourceLibrary == null) || resourceLibrary.equals("primefaces")) &&
 			PRIMEFACES_JQUERY_PLUGIN_JS_RESOURCES.contains(resourceName);
 
 		boolean richFacesJQueryPluginJSResource = false;
+		final ProductInfo RICHFACES = productInfoFactory.getProductInfo(ProductInfo.Name.RICHFACES);
 
-		if (RICHFACES_DETECTED) {
+		if (RICHFACES.isDetected()) {
 
 			boolean richfacesResourceLibrary = ("org.richfaces.resource".equals(resourceLibrary) ||
 					"org.richfaces.staticResource".equals(resourceLibrary) || "org.richfaces".equals(resourceLibrary));
