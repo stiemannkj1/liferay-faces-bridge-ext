@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2017 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2018 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,20 +16,24 @@ package com.liferay.faces.bridge.ext.osgi.mojarra.servlet;
 import java.util.EventListener;
 import java.util.Set;
 
+import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
+import com.liferay.faces.util.osgi.FacesThinWabInitializer;
 import com.liferay.faces.util.osgi.OSGiClassLoaderUtil;
+
 
 /**
  * @author  Kyle Stiemann
  */
-public final class FacesInitializer extends com.sun.faces.config.FacesInitializer {
+public final class LiferayFacesThinWabInitializer implements ServletContainerInitializer {
 
 	@Override
 	public void onStartup(Set<Class<?>> classes, ServletContext servletContext) throws ServletException {
 
-		super.onStartup(classes, servletContext);
+		FacesThinWabInitializer facesThinWabInitializer = new FacesThinWabInitializer();
+		facesThinWabInitializer.onStartup(classes, servletContext);
 
 		try {
 
