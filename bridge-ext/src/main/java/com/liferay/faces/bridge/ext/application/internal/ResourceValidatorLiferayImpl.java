@@ -31,6 +31,8 @@ import com.liferay.faces.util.config.WebConfig;
 import com.liferay.faces.util.logging.Logger;
 import com.liferay.faces.util.logging.LoggerFactory;
 
+import com.liferay.portal.kernel.servlet.PortletServlet;
+
 
 /**
  * @author  Neil Griffin
@@ -101,35 +103,24 @@ public class ResourceValidatorLiferayImpl extends ResourceValidatorWrapper imple
 		return selfReferencing;
 	}
 
-	protected String getInvokerServletFQCN() {
-		return "com.liferay.portal.kernel.servlet.PortletServlet";
-	}
-
 	protected boolean isInvokerServletClass(String servletClassFQCN) {
 
 		boolean invokerServletClass = false;
-		String invokerServletFQCN = getInvokerServletFQCN();
 
-		if (invokerServletFQCN.equals(servletClassFQCN)) {
-
+		if (PortletServlet.class.getName().equals(servletClassFQCN)) {
 			invokerServletClass = true;
 		}
 		else {
 
+			ClassLoader threadContextClassLoader = Thread.currentThread().getContextClassLoader();
+
 			try {
-				Class<?> invokerServletClazz = Class.forName(invokerServletFQCN);
 
-				try {
-					Class<?> servletClazz = Class.forName(servletClassFQCN);
-					invokerServletClass = invokerServletClazz.isAssignableFrom(servletClazz);
-				}
-				catch (Throwable t) {
-					logger.error("Unable to load servletClassFQCN=[{0}] error=[{1}]", servletClassFQCN, t.getMessage());
-				}
-
+				Class<?> servletClazz = Class.forName(servletClassFQCN, true, threadContextClassLoader);
+				invokerServletClass = PortletServlet.class.isAssignableFrom(servletClazz);
 			}
 			catch (Throwable t) {
-				logger.error("Unable to load invokerServletFQCN=[{0}] error=[{1}]", invokerServletFQCN, t.getMessage());
+				logger.error("Unable to load servletClassFQCN=[{0}] error=[{1}]", servletClassFQCN, t.getMessage());
 			}
 		}
 
