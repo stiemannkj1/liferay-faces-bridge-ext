@@ -308,7 +308,7 @@
 		<dependency>
 			<groupId>com.liferay.faces</groupId>
 			<artifactId>com.liferay.faces.util</artifactId>
-			<version>3.2.0-alpha1</version>
+			<version>3.2.0-alpha2</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
@@ -364,12 +364,6 @@
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.core</artifactId>
-			<version>5.0.0</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.osgi</groupId>
