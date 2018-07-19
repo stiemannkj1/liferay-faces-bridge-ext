@@ -1,15 +1,49 @@
 apply plugin: 'war'
+version "${version}"
+def alloyDependency = 'com.liferay.faces:com.liferay.faces.alloy:@liferay-faces-alloy-version@'
+def importPackage='''@liferay-faces-alloy-portlet-import-package@'''.replace('\t', '\\\n\t')
 
 repositories {
-     mavenCentral()
+	mavenCentral()
+}
+
+if (project.hasProperty('fatWar')) {
+	importPackage = '';
+
+	processResources {
+		exclude '**/META-INF/services/javax.servlet.ServletContainerInitializer'
+	}
+
+	/*
+		Please make sure the following dependencies (and any transitive dependencies) are deployed in
+		$LIFERAY_HOME/osgi/modules. If you would like to deploy this war without including these dependencies in
+		$LIFERAY_HOME/osgi/modules, use the "-PfatWar" property so they are included in the built WAR's WEB-INF/lib
+		folder.
+	*/
+	dependencies {
+		compile alloyDependency
+		compile group: 'com.liferay.faces', name: 'com.liferay.faces.bridge.ext', version: '@liferay-faces-bridge-ext-version@'
+		compile group: 'com.liferay.faces', name: 'com.liferay.faces.bridge.impl', version: '@liferay-faces-bridge-impl-version@'
+		compile group: 'log4j', name: 'log4j', version: '@log4j-version@'
+		runtime group: 'org.glassfish', name: 'javax.faces', version: '@mojarra-version@'
+	}
+}
+
+war {
+	filesMatching('WEB-INF/**/*.properties') {
+		filter {
+			String line -> line
+				.replace('${project.version}', version)
+				.replace('${import.package}', importPackage)
+		}
+	}
 }
 
 dependencies {
-    compile group: 'com.liferay.faces', name: 'com.liferay.faces.alloy', version: '@liferay-faces-alloy-version@'
-    compile group: 'com.liferay.faces', name: 'com.liferay.faces.bridge.ext', version: '@liferay-faces-bridge-ext-version@'
-    compile group: 'com.liferay.faces', name: 'com.liferay.faces.bridge.impl', version: '@liferay-faces-bridge-impl-version@'
-    compile group: 'log4j', name: 'log4j', version: '@log4j-version@'
-    runtime group: 'org.glassfish', name: 'javax.faces', version: '@mojarra-version@'
-    providedCompile group: 'javax.faces', name: 'javax.faces-api', version: '@faces-api-version@'
-}
 
+	if (!project.hasProperty('fatWar')) {
+		providedCompile alloyDependency
+	}
+
+	providedCompile group: 'javax.faces', name: 'javax.faces-api', version: '@faces-api-version@'
+}

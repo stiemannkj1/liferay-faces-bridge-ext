@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -188,6 +190,41 @@ public class MavenGradleGenerationDiffIT {
 		return new ZipFile(builtWars[0]);
 	}
 
+	private static boolean isThinWarSupported(String version, String archetypeType) {
+
+		String versionWithoutQualifier = version.replaceAll("([0-9.]+[0-9]).*", "$1");
+		int[] firstVersionSupportingThinWars = new int[] { 5, 0, 5 };
+
+		if ("bootsfaces".equals(archetypeType) || "butterfaces".equals(archetypeType)) {
+			firstVersionSupportingThinWars = new int[] { 5, 0, 3 };
+		}
+
+		String[] versionSections = versionWithoutQualifier.split("\\.");
+
+		if (versionSections.length != 3) {
+			throw new IllegalArgumentException("Version " + version +
+				" must be of the form major.minor.patch-qualifier");
+		}
+
+		boolean isThinWarSupported = true;
+
+		for (int i = 0; i < versionSections.length; i++) {
+
+			int currentVersionSection = Integer.parseInt(versionSections[i]);
+
+			if (currentVersionSection != firstVersionSupportingThinWars[i]) {
+
+				if (currentVersionSection < firstVersionSupportingThinWars[i]) {
+					isThinWarSupported = false;
+				}
+
+				break;
+			}
+		}
+
+		return isThinWarSupported;
+	}
+
 	private static boolean isZipFile(String name) {
 
 		String lowerCaseName = name.toLowerCase(Locale.ENGLISH);
@@ -212,6 +249,162 @@ public class MavenGradleGenerationDiffIT {
 		return stringBuilder.toString();
 	}
 
+	private static void verifyBuiltWarContentsAreTheSame(boolean thinWar, File generatedProjectDirectory,
+		Invoker invoker, String archetypeArtifactId) throws MavenInvocationException, CommandLineException,
+		ZipException, IOException {
+
+		ProjectConnection projectConnection = null;
+		ZipFile mavenWar = null;
+		ZipFile gradleWar = null;
+
+		try {
+
+			// Programmatically run the following command: mvn clean package.
+			InvocationRequest buildPortletInvocationRequest = new DefaultInvocationRequest();
+			buildPortletInvocationRequest.setBaseDirectory(generatedProjectDirectory);
+			buildPortletInvocationRequest.setBatchMode(true);
+			buildPortletInvocationRequest.setGoals(Arrays.asList("clean", "package"));
+
+			if (!thinWar) {
+				buildPortletInvocationRequest.setProfiles(Collections.singletonList("fatWar"));
+			}
+
+			Properties properties = new Properties();
+			properties.setProperty("interactiveMode", "false");
+			buildPortletInvocationRequest.setProperties(properties);
+
+			InvocationResult invocationResult = invoker.execute(buildPortletInvocationRequest);
+			CommandLineException executionException = invocationResult.getExecutionException();
+			int exitCode = invocationResult.getExitCode();
+
+			if (executionException != null) {
+				throw executionException;
+			}
+			else if (exitCode > 0) {
+				throw new CommandLineException("Failed to build war from " + archetypeArtifactId +
+					". Build failed with exit code " + exitCode + ".");
+			}
+
+			String generatedProjectName = generatedProjectDirectory.getName();
+			mavenWar = getZipFileFromWar(generatedProjectName, generatedProjectDirectory, "target");
+
+			Map<String, ZipEntry> mavenWarZipEntries = getZipEntriesFromWar(mavenWar);
+
+			// Programmatically run the following command: gradle clean build.
+			GradleConnector gradleConnector = GradleConnector.newConnector();
+			gradleConnector.forProjectDirectory(generatedProjectDirectory);
+
+			projectConnection = gradleConnector.connect();
+
+			BuildLauncher buildLauncher = projectConnection.newBuild();
+			buildLauncher.setStandardError(System.err);
+			buildLauncher.setStandardOutput(System.out);
+			buildLauncher.forTasks("clean", "build");
+
+			if (!thinWar) {
+				buildLauncher.withArguments("-PfatWar");
+			}
+
+			buildLauncher.run();
+			projectConnection.close();
+			projectConnection = null;
+
+			gradleWar = getZipFileFromWar(generatedProjectName, generatedProjectDirectory, "build", "libs");
+
+			Map<String, ZipEntry> gradleWarZipEntries = getZipEntriesFromWar(gradleWar);
+			Set<String> mavenWarZipEntryNames = mavenWarZipEntries.keySet();
+			int numberOfFilesInMavenWar = mavenWarZipEntryNames.size();
+			Set<String> gradleWarZipEntryNames = gradleWarZipEntries.keySet();
+			int numberOfFilesInGradleWar = gradleWarZipEntryNames.size();
+
+			if (numberOfFilesInMavenWar != numberOfFilesInGradleWar) {
+
+				verifyNoExtraFilesInWar("maven", mavenWarZipEntryNames, gradleWarZipEntryNames);
+				verifyNoExtraFilesInWar("gradle", gradleWarZipEntryNames, mavenWarZipEntryNames);
+			}
+
+			Set<String> unequalWarZipEntryNames = new HashSet<String>();
+			String warSize = "thin";
+
+			if (!thinWar) {
+				warSize = "fat";
+			}
+
+			for (String mavenWarZipEntryName : mavenWarZipEntryNames) {
+
+				ZipEntry gradleWarZipEntry = gradleWarZipEntries.get(mavenWarZipEntryName);
+
+				if (gradleWarZipEntry == null) {
+
+					// Already tested via verifyNoExtraFilesInWar() above;
+					continue;
+				}
+
+				ZipEntry mavenWarZipEntry = mavenWarZipEntries.get(mavenWarZipEntryName);
+
+				if ("META-INF/MANIFEST.MF".equals(mavenWarZipEntryName) &&
+						!areZipEntriesEqual(mavenWarZipEntryName, mavenWarZipEntry, gradleWarZipEntry)) {
+
+					logger.warn("Maven and gradle {} war META-INF/MANIFEST.MF files do not have the same contents.",
+						warSize);
+
+					String mavenManifestContents = getMETA_INF_MANIFEST_MFContents(mavenWar, mavenWarZipEntry);
+					logger.info(META_INF_MANIFEST_MF_CONTENTS_LOG_MESSAGE, "Maven", mavenManifestContents);
+
+					String gradleManifestContents = getMETA_INF_MANIFEST_MFContents(gradleWar, gradleWarZipEntry);
+					logger.info(META_INF_MANIFEST_MF_CONTENTS_LOG_MESSAGE, "Gradle", gradleManifestContents);
+
+					String manifestVersionRegex = "^\\s*Manifest-Version:\\s*1.0\n?[\\s\\S]*";
+					boolean mavenManifestStartsWithManifestVersion = mavenManifestContents.matches(
+							manifestVersionRegex);
+					boolean gradleManifestStartsWithManifestVersion = gradleManifestContents.matches(
+							manifestVersionRegex);
+					String failingWarTypes = null;
+
+					if (!mavenManifestStartsWithManifestVersion && !gradleManifestStartsWithManifestVersion) {
+						failingWarTypes = "Maven and Gradle " + warSize + " war";
+					}
+					else if (!mavenManifestStartsWithManifestVersion) {
+						failingWarTypes = "Maven " + warSize + " war";
+					}
+					else if (!gradleManifestStartsWithManifestVersion) {
+						failingWarTypes = "Gradle " + warSize + " war";
+					}
+
+					if (failingWarTypes != null) {
+						throw new AssertionError(failingWarTypes +
+							" META-INF/MANIFEST.MF file(s) do not contain \"Manifest-Version: 1.0\" as the first line.");
+					}
+
+					continue;
+				}
+
+				if (!areZipEntriesEqual(mavenWarZipEntryName, mavenWarZipEntry, gradleWarZipEntry)) {
+					unequalWarZipEntryNames.add(mavenWarZipEntryName);
+				}
+			}
+
+			mavenWar.close();
+			mavenWar = null;
+			gradleWar.close();
+			gradleWar = null;
+
+			if (!unequalWarZipEntryNames.isEmpty()) {
+				throw new AssertionError("The following file(s) were different between the maven and gradle " +
+					warSize + " wars: " + toString(unequalWarZipEntryNames));
+			}
+		}
+		finally {
+
+			if (projectConnection != null) {
+				projectConnection.close();
+			}
+
+			close(mavenWar);
+			close(gradleWar);
+		}
+	}
+
 	private static void verifyNoExtraFilesInWar(String warType, Set<String> minuend, Set<String> subtrahend) {
 
 		boolean mavenWar = warType.equals("maven");
@@ -230,7 +423,7 @@ public class MavenGradleGenerationDiffIT {
 			if ((mavenWar && IGNORED_MAVEN_WAR_ENTRY_NAMES.contains(warZipEntryNameWithoutPath)) ||
 					(gradleWar && IGNORED_GRADLE_WAR_ENTRY_NAMES.contains(warZipEntryNameWithoutPath))) {
 				iterator.remove();
-				logger.info("Ignoring {} in {} war", warZipEntryName, warType);
+				logger.info("Ignoring {} in {} war.", warZipEntryName, warType);
 			}
 		}
 
@@ -245,9 +438,6 @@ public class MavenGradleGenerationDiffIT {
 		CommandLineException {
 
 		File temporaryDirectory = null;
-		ProjectConnection projectConnection = null;
-		ZipFile mavenWar = null;
-		ZipFile gradleWar = null;
 
 		try {
 
@@ -330,135 +520,22 @@ public class MavenGradleGenerationDiffIT {
 						". Build failed with exit code " + exitCode + ".");
 				}
 
-				// Programmatically run the following command: mvn clean package.
-				InvocationRequest buildPortletInvocationRequest = new DefaultInvocationRequest();
 				File generatedProjectDirectory = new File(temporaryDirectory, generatedProjectName);
-				buildPortletInvocationRequest.setBaseDirectory(generatedProjectDirectory);
-				buildPortletInvocationRequest.setBatchMode(true);
-				buildPortletInvocationRequest.setGoals(Arrays.asList("clean", "package"));
-				properties = new Properties();
-				properties.setProperty("interactiveMode", "false");
-				buildPortletInvocationRequest.setProperties(properties);
-				invocationResult = invoker.execute(buildPortletInvocationRequest);
-				executionException = invocationResult.getExecutionException();
-				exitCode = invocationResult.getExitCode();
 
-				if (executionException != null) {
-					throw executionException;
+				if (isThinWarSupported(version, archetypeType)) {
+					verifyBuiltWarContentsAreTheSame(true, generatedProjectDirectory, invoker, archetypeArtifactId);
 				}
-				else if (exitCode > 0) {
-					throw new CommandLineException("Failed to generate archetype from " + archetypeArtifactId +
-						". Build failed with exit code " + exitCode + ".");
+				else {
+					logger.info(
+						"Skipping thin war tests since thin wars are not supported for archetype {} version {}.",
+						archetypeArtifactId, version);
 				}
 
-				mavenWar = getZipFileFromWar(generatedProjectName, generatedProjectDirectory, "target");
-
-				Map<String, ZipEntry> mavenWarZipEntries = getZipEntriesFromWar(mavenWar);
-
-				// Programmatically run the following command: gradle clean build.
-				GradleConnector gradleConnector = GradleConnector.newConnector();
-				gradleConnector.forProjectDirectory(generatedProjectDirectory);
-
-				projectConnection = gradleConnector.connect();
-
-				BuildLauncher buildLauncher = projectConnection.newBuild();
-				buildLauncher.setStandardError(System.err);
-				buildLauncher.setStandardOutput(System.out);
-				buildLauncher.forTasks("clean", "build");
-				buildLauncher.run();
-				projectConnection.close();
-				projectConnection = null;
-
-				gradleWar = getZipFileFromWar(generatedProjectName, generatedProjectDirectory, "build", "libs");
-
-				Map<String, ZipEntry> gradleWarZipEntries = getZipEntriesFromWar(gradleWar);
-				Set<String> mavenWarZipEntryNames = mavenWarZipEntries.keySet();
-				int numberOfFilesInMavenWar = mavenWarZipEntryNames.size();
-				Set<String> gradleWarZipEntryNames = gradleWarZipEntries.keySet();
-				int numberOfFilesInGradleWar = gradleWarZipEntryNames.size();
-
-				if (numberOfFilesInMavenWar != numberOfFilesInGradleWar) {
-
-					verifyNoExtraFilesInWar("maven", mavenWarZipEntryNames, gradleWarZipEntryNames);
-					verifyNoExtraFilesInWar("gradle", gradleWarZipEntryNames, mavenWarZipEntryNames);
-				}
-
-				Set<String> unequalWarZipEntryNames = new HashSet<String>();
-
-				for (String mavenWarZipEntryName : mavenWarZipEntryNames) {
-
-					ZipEntry gradleWarZipEntry = gradleWarZipEntries.get(mavenWarZipEntryName);
-
-					if (gradleWarZipEntry == null) {
-
-						// Already tested via verifyNoExtraFilesInWar() above;
-						continue;
-					}
-
-					ZipEntry mavenWarZipEntry = mavenWarZipEntries.get(mavenWarZipEntryName);
-
-					if ("META-INF/MANIFEST.MF".equals(mavenWarZipEntryName) &&
-							!areZipEntriesEqual(mavenWarZipEntryName, mavenWarZipEntry, gradleWarZipEntry)) {
-
-						logger.warn("Maven and gradle war META-INF/MANIFEST.MF files do not have the same contents.");
-
-						String mavenManifestContents = getMETA_INF_MANIFEST_MFContents(mavenWar, mavenWarZipEntry);
-						logger.info(META_INF_MANIFEST_MF_CONTENTS_LOG_MESSAGE, "Maven", mavenManifestContents);
-
-						String gradleManifestContents = getMETA_INF_MANIFEST_MFContents(gradleWar, gradleWarZipEntry);
-						logger.info(META_INF_MANIFEST_MF_CONTENTS_LOG_MESSAGE, "Gradle", gradleManifestContents);
-
-						String manifestVersionRegex = "^\\s*Manifest-Version:\\s*1.0\n?[\\s\\S]*";
-						boolean mavenManifestStartsWithManifestVersion = mavenManifestContents.matches(
-								manifestVersionRegex);
-						boolean gradleManifestStartsWithManifestVersion = gradleManifestContents.matches(
-								manifestVersionRegex);
-						String failingWarTypes = null;
-
-						if (!mavenManifestStartsWithManifestVersion && !gradleManifestStartsWithManifestVersion) {
-							failingWarTypes = "Maven and Gradle war";
-						}
-						else if (!mavenManifestStartsWithManifestVersion) {
-							failingWarTypes = "Maven war";
-						}
-						else if (!gradleManifestStartsWithManifestVersion) {
-							failingWarTypes = "Gradle war";
-						}
-
-						if (failingWarTypes != null) {
-							throw new AssertionError(failingWarTypes +
-								" META-INF/MANIFEST.MF file(s) do not contain \"Manifest-Version: 1.0\" as the first line.");
-						}
-
-						continue;
-					}
-
-					if (!areZipEntriesEqual(mavenWarZipEntryName, mavenWarZipEntry, gradleWarZipEntry)) {
-						unequalWarZipEntryNames.add(mavenWarZipEntryName);
-					}
-				}
-
-				mavenWar.close();
-				mavenWar = null;
-				gradleWar.close();
-				gradleWar = null;
+				verifyBuiltWarContentsAreTheSame(false, generatedProjectDirectory, invoker, archetypeArtifactId);
 				Files.walkFileTree(generatedProjectDirectory.toPath(), new FileVisitorDeleteImpl());
-
-				if (!unequalWarZipEntryNames.isEmpty()) {
-					throw new AssertionError(
-						"The following file(s) were different between the maven and gradle wars: " +
-						toString(unequalWarZipEntryNames));
-				}
 			}
 		}
 		finally {
-
-			if (projectConnection != null) {
-				projectConnection.close();
-			}
-
-			close(mavenWar);
-			close(gradleWar);
 
 			if (temporaryDirectory != null) {
 				Files.walkFileTree(temporaryDirectory.toPath(), new FileVisitorDeleteImpl());
