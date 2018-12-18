@@ -112,11 +112,15 @@ public class ResourceValidatorLiferayImpl extends ResourceValidatorWrapper imple
 		}
 		else {
 
-			ClassLoader threadContextClassLoader = Thread.currentThread().getContextClassLoader();
+			ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+			if (classLoader == null) {
+				classLoader = getClass().getClassLoader();
+			}
 
 			try {
 
-				Class<?> servletClazz = Class.forName(servletClassFQCN, true, threadContextClassLoader);
+				Class<?> servletClazz = Class.forName(servletClassFQCN, true, classLoader);
 				invokerServletClass = PortletServlet.class.isAssignableFrom(servletClazz);
 			}
 			catch (Throwable t) {
