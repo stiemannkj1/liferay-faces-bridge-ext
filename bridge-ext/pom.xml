@@ -209,9 +209,19 @@
 								!com.liferay.faces.bridge.ext,\
 								!com.liferay.faces.bridge.ext.*,\
 								javax.el;version="[2.2.0,4.0.0)",\
+								javax.enterprise.inject.spi;version="[1.1.0,2.1.0)",\
 								com.liferay.faces.util.*;version="[1.0.0,2.0.0)",\
 								com.liferay.faces.bridge.*;version="[1.0.0,2.0.0)",\
 								com.liferay.faces.portlet.*;version="[1.0.0,2.0.0)",\
+								com.liferay.portal.kernel.exception;version="[7.0.0,9.0.0)",\
+								com.liferay.portal.kernel.model;version="[1.0.0,4.0.0)",\
+								com.liferay.portal.kernel.service;version="[1.0.0,4.0.0)",\
+								com.liferay.portal.kernel.theme;version="[1.0.0,4.0.0)",\
+								com.liferay.portal.kernel.portlet;version="[7.0.0,10.0.0)",\
+								com.liferay.portal.kernel.servlet;version="[7.0.0,9.0.0)",\
+								com.liferay.portal.kernel.servlet.taglib.aui;version="[7.0.0,9.0.0)",\
+								com.liferay.portal.kernel.util;version="[7.0.0,10.0.0)",\
+								com.liferay.taglib.util;version="[7.0.0,9.0.0)",\
 								javax.portlet.faces.*;version="[1.0.0,2.0.0)",\
 								*
 							# The following configuration enables the Bridge API bundle to obtain necessary SPI
@@ -338,6 +348,13 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>javax.enterprise</groupId>
+			<artifactId>cdi-api</artifactId>
+			<version>1.2</version>
+			<scope>provided</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
 			<groupId>javax.faces</groupId>
 			<artifactId>javax.faces-api</artifactId>
 			<version>${faces.api.version}</version>
@@ -348,6 +365,7 @@
 			<artifactId>javax.faces</artifactId>
 			<version>${mojarra.version}</version>
 			<scope>provided</scope>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>javax.portlet</groupId>
