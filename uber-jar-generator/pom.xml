@@ -10,6 +10,8 @@
 	<packaging>jar</packaging>
 
 	<properties>
+		<alloy.imports>\</alloy.imports>
+		<alloy.exports>\</alloy.exports>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -17,12 +19,33 @@
 		<bridge.ext.version>5.0.5-SNAPSHOT</bridge.ext.version>
 		<bridge.impl.version>4.1.4-SNAPSHOT</bridge.impl.version>
 		<util.version>3.3.0-SNAPSHOT</util.version>
-		<alloy.version>3.0.2</alloy.version>
 		<mojarra.version>2.2.19</mojarra.version>
 		<list.real.duplicates>false</list.real.duplicates>
 		<timestamp>${maven.build.timestamp}</timestamp>
 		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 	</properties>
+
+	<profiles>
+		<profile>
+			<id>alloy</id>
+			<properties>
+				<alloy.imports>
+					!com.liferay.faces.alloy.*, \
+				</alloy.imports>
+				<alloy.version>3.0.2</alloy.version>
+				<alloy.exports>
+					com.liferay.faces.alloy.*;version="${alloy.version}", \
+				</alloy.exports>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>com.liferay.faces</groupId>
+					<artifactId>com.liferay.faces.alloy</artifactId>
+					<version>${alloy.version}</version>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
 
 	<build>
 		<finalName>${project.artifactId}-${project.version}.${timestamp}</finalName>
@@ -42,6 +65,7 @@
 							<bnd>
 								<![CDATA[
 									Import-Package: \
+										${alloy.imports}
 										!com.liferay.faces,\
 										!com.liferay.faces.*,\
 										!com.sun.faces,\
@@ -75,14 +99,13 @@
 										org.jboss.weld.*;resolution:=optional,\
 										*
 									Export-Package: \
-										com.liferay.faces.alloy.*;version="${alloy.version}", \
+										${alloy.exports}
 										com.liferay.faces.bridge.internal;version="${bridge.impl.version}", \
 										com.liferay.faces.bridge.*.internal;version="${bridge.impl.version}", \
 										com.liferay.faces.bridge;version="${bridge.api.version}", \
 										com.liferay.faces.bridge.*;version="${bridge.api.version}", \
 										com.liferay.faces.bridge.ext;version="${bridge.ext.version}", \
 										com.liferay.faces.bridge.ext.*;version="${bridge.ext.version}", \
-										com.liferay.faces.portal.*;version="${portal.version}", \
 										com.liferay.faces.portlet.internal;version="${bridge.impl.version}", \
 										com.liferay.faces.portlet.*.internal;version="${bridge.impl.version}", \
 										com.liferay.faces.portlet.*;version="${bridge.api.version}", \
@@ -226,11 +249,6 @@
 			<groupId>com.liferay.faces</groupId>
 			<artifactId>com.liferay.faces.util</artifactId>
 			<version>${util.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.liferay.faces</groupId>
-			<artifactId>com.liferay.faces.alloy</artifactId>
-			<version>${alloy.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish</groupId>
