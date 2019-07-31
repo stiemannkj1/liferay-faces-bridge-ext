@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.liferay.faces.uber.jar.generator</groupId>
+	<artifactId>com.liferay.faces.uber.jar</artifactId>
+	<version>5.0.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<bridge.api.version>4.2.0-SNAPSHOT</bridge.api.version>
+		<bridge.ext.version>5.0.5-SNAPSHOT</bridge.ext.version>
+		<bridge.impl.version>4.1.4-SNAPSHOT</bridge.impl.version>
+		<util.version>3.3.0-SNAPSHOT</util.version>
+		<alloy.version>3.0.2</alloy.version>
+		<mojarra.version>2.2.19</mojarra.version>
+		<list.real.duplicates>false</list.real.duplicates>
+		<timestamp>${maven.build.timestamp}</timestamp>
+		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+	</properties>
+
+	<build>
+		<finalName>${project.artifactId}-${project.version}.${timestamp}</finalName>
+		<plugins>
+			<plugin>
+				<groupId>biz.aQute.bnd</groupId>
+				<artifactId>bnd-maven-plugin</artifactId>
+				<version>4.2.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>bnd-process</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<skip>${list.real.duplicates}</skip>
+							<bnd>
+								<![CDATA[
+									Import-Package: \
+										!com.liferay.faces,\
+										!com.liferay.faces.*,\
+										!com.sun.faces,\
+										!com.sun.faces.*,\
+										!javax.faces,\
+										!javax.faces.*,\
+										!javax.portlet.faces,\
+										!javax.portlet.faces.*,\
+										org.osgi.framework,\
+										org.osgi.framework.wiring,\
+										org.icefaces.ace.component.fileentry;resolution:=optional,\
+										org.primefaces.*;resolution:=optional,\
+										org.apache.commons.fileupload;version="[1.3.0,2)";resolution:=optional,\
+										org.apache.log4j;version="[1.2.0,2)",\
+										javax.el;version="[2.2.0,4.0.0)",\
+										javax.servlet.annotation.*;resolution:=optional,\
+										javax.inject.*;resolution:=optional,\
+										javax.enterprise.inject.*;resolution:=optional,\
+										javax.enterprise.util.*;resolution:=optional,\
+										javax.enterprise.context.*;resolution:=optional,\
+										javax.annotation.*;version="[1.0.0,2.0.0)",\
+										javax.crypto.*,\
+										javax.validation.*;resolution:=optional,\
+										javax.enterprise.event;resolution:=optional,\
+										javax.ejb.*;resolution:=optional,\
+										javax.persistence.*;resolution:=optional,\
+										com.sun.enterprise.*;resolution:=optional,\
+										groovy.*;resolution:=optional,\
+										org.mortbay.jetty.*;resolution:=optional,\
+										org.apache.*;resolution:=optional,\
+										org.jboss.weld.*;resolution:=optional,\
+										*
+									Export-Package: \
+										com.liferay.faces.alloy.*;version="${alloy.version}", \
+										com.liferay.faces.bridge.internal;version="${bridge.impl.version}", \
+										com.liferay.faces.bridge.*.internal;version="${bridge.impl.version}", \
+										com.liferay.faces.bridge;version="${bridge.api.version}", \
+										com.liferay.faces.bridge.*;version="${bridge.api.version}", \
+										com.liferay.faces.bridge.ext;version="${bridge.ext.version}", \
+										com.liferay.faces.bridge.ext.*;version="${bridge.ext.version}", \
+										com.liferay.faces.portal.*;version="${portal.version}", \
+										com.liferay.faces.portlet.internal;version="${bridge.impl.version}", \
+										com.liferay.faces.portlet.*.internal;version="${bridge.impl.version}", \
+										com.liferay.faces.portlet.*;version="${bridge.api.version}", \
+										com.liferay.faces.util;version="${util.version}", \
+										com.liferay.faces.util.*;version="${util.version}", \
+										com.sun.faces;version="${mojarra.version}", \
+										com.sun.faces.*;version="${mojarra.version}", \
+										javax.faces;version="${mojarra.version}", \
+										javax.faces.*;version="${mojarra.version}", \
+										javax.portlet.faces;version="${bridge.api.version}", \
+										javax.portlet.faces.*;version="${bridge.api.version}"
+									Require-Capability: \
+										osgi.serviceloader;filter:="(osgi.serviceloader=com.sun.faces.spi.AnnotationProvider)";\
+											cardinality:=multiple,\
+										osgi.serviceloader;filter:="(osgi.serviceloader=com.sun.faces.spi.FaceletConfigResourceProvider)";\
+											cardinality:=multiple,\
+										osgi.serviceloader;filter:="(osgi.serviceloader=com.sun.faces.spi.FacesConfigResourceProvider)";\
+											cardinality:=multiple,\
+										osgi.serviceloader;filter:="(osgi.serviceloader=com.sun.faces.util.cdi11.CDIUtil)";\
+											resolution:=optional;cardinality:=multiple,\
+										osgi.serviceloader;filter:="(osgi.serviceloader=javax.faces.application.ApplicationConfigurationPopulator)";\
+											resolution:=optional;cardinality:=multiple,\
+										osgi.serviceloader;filter:="(osgi.serviceloader=javax.portlet.faces.Bridge)";\
+											cardinality:=multiple,\
+										osgi.serviceloader;filter:="(osgi.serviceloader=com.liferay.faces.bridge.BridgeFactoryFinder)";\
+											cardinality:=multiple,\
+										osgi.serviceloader;filter:="(osgi.serviceloader=com.liferay.faces.util.factory.FactoryExtensionFinder)";\
+											resolution:=optional;cardinality:=multiple,\
+										osgi.serviceloader;filter:="(osgi.serviceloader=com.liferay.faces.util.logging.LoggerFactory)";\
+											resolution:=optional;cardinality:=multiple,\
+										osgi.serviceloader;filter:="(osgi.serviceloader=com.liferay.faces.util.product.ProductFactory)";\
+											resolution:=optional;cardinality:=multiple,\
+										osgi.extender; filter:="(osgi.extender=osgi.serviceloader.processor)",\
+										osgi.extender; filter:="(osgi.extender=osgi.serviceloader.registrar)"
+									Provide-Capability: \
+										osgi.serviceloader;osgi.serviceloader=javax.portlet.faces.Bridge;\
+											uses:="javax.portlet.faces",\
+										osgi.serviceloader;osgi.serviceloader=com.liferay.faces.bridge.BridgeFactoryFinder;\
+											uses:="com.liferay.faces.bridge",\
+										osgi.serviceloader;osgi.serviceloader=com.sun.faces.spi.AnnotationProvider;\
+											uses:="com.sun.faces.spi",\
+										osgi.serviceloader;osgi.serviceloader=com.sun.faces.spi.FaceletConfigResourceProvider;\
+											uses:="com.sun.faces.spi",\
+										osgi.serviceloader;osgi.serviceloader=com.sun.faces.spi.FacesConfigResourceProvider;\
+											uses:="com.sun.faces.spi",\
+										osgi.extender;osgi.extender="jsp.taglib";uri="http://liferay.com/faces/bridge";\
+											version:Version="1.0.0",\
+										osgi.extender;osgi.extender="jsp.taglib";uri="http://java.sun.com/jsf/html";\
+											version:Version="2.2",\
+										osgi.extender;osgi.extender="jsp.taglib";uri="http://java.sun.com/jsf/core";\
+											version:Version="2.2"
+								]]>
+							</bnd>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.2.1</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<transformers>
+								<transformer
+									implementation="com.liferay.faces.maven.shade.plugin.extensions.BNDManifestTransformerImpl">
+									<bndManifestLocation>${project.build.directory}/classes/META-INF/MANIFEST.MF</bndManifestLocation>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>**/*.properties</resource>
+								</transformer>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+									<resource>javax.enterprise.inject.spi.Extension</resource>
+									<resource>javax.servlet.ServletContainerInitializer</resource>
+								</transformer>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"
+								/>
+								<transformer
+									implementation="com.liferay.faces.maven.shade.plugin.extensions.ConfigTransformerImpl"
+								/>
+							</transformers>
+						</configuration>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>com.liferay.faces</groupId>
+						<artifactId>com.liferay.faces.maven.shade.plugin.extensions</artifactId>
+						<version>0.1.0</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+			<plugin>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>2.7</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>2.5.2</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.1</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.liferay.faces</groupId>
+			<artifactId>com.liferay.faces.bridge.api</artifactId>
+			<version>${bridge.api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.liferay.faces</groupId>
+			<artifactId>com.liferay.faces.bridge.ext</artifactId>
+			<version>${bridge.ext.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.liferay.faces</groupId>
+			<artifactId>com.liferay.faces.bridge.impl</artifactId>
+			<version>${bridge.impl.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.liferay.faces</groupId>
+			<artifactId>com.liferay.faces.util</artifactId>
+			<version>${util.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.liferay.faces</groupId>
+			<artifactId>com.liferay.faces.alloy</artifactId>
+			<version>${alloy.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.faces</artifactId>
+			<version>${mojarra.version}</version>
+		</dependency>
+	</dependencies>
+</project>
