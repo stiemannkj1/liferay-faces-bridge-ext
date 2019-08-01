@@ -12,6 +12,8 @@
 	<properties>
 		<alloy.imports>\</alloy.imports>
 		<alloy.exports>\</alloy.exports>
+		<primefaces.imports>!org.primefaces.*,\</primefaces.imports>
+		<primefaces.exports>\</primefaces.exports>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -45,6 +47,35 @@
 				</dependency>
 			</dependencies>
 		</profile>
+		<profile>
+			<id>primefaces</id>
+			<properties>
+				<primefaces.imports>
+					!org.primefaces.*, \
+                    com.google.zxing.qrcode.*;resolution:=optional, \
+                    com.hazelcast.*;resolution:=optional, \
+                    com.lowagie.text.*;resolution:=optional, \
+                    com.rometools.rome.*;resolution:=optional, \
+                    net.glxn.qrgen.*;resolution:=optional, \
+                    org.ehcache.*;resolution:=optional, \
+                    org.apache.xmlbeans.*;resolution:=optional, \
+                    org.apache.poi.*;resolution:=optional, \
+                    org.krysalis.barcode4j.*;resolution:=optional, \
+                    org.owasp.*;resolution:=optional, \
+				</primefaces.imports>
+				<primefaces.version>7.0</primefaces.version>
+				<primefaces.exports>
+					org.primefaces.*;version="${primefaces.version}", \
+				</primefaces.exports>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.primefaces</groupId>
+					<artifactId>primefaces</artifactId>
+					<version>${primefaces.version}</version>
+				</dependency>
+			</dependencies>
+		</profile>
 	</profiles>
 
 	<build>
@@ -66,6 +97,7 @@
 								<![CDATA[
 									Import-Package: \
 										${alloy.imports}
+										${primefaces.imports}
 										!com.liferay.faces,\
 										!com.liferay.faces.*,\
 										!com.sun.faces,\
@@ -77,7 +109,6 @@
 										org.osgi.framework,\
 										org.osgi.framework.wiring,\
 										org.icefaces.ace.component.fileentry;resolution:=optional,\
-										org.primefaces.*;resolution:=optional,\
 										org.apache.commons.fileupload;version="[1.3.0,2)";resolution:=optional,\
 										org.apache.log4j;version="[1.2.0,2)",\
 										javax.el;version="[2.2.0,4.0.0)",\
@@ -100,6 +131,7 @@
 										*
 									Export-Package: \
 										${alloy.exports}
+										${primefaces.exports}
 										com.liferay.faces.bridge.internal;version="${bridge.impl.version}", \
 										com.liferay.faces.bridge.*.internal;version="${bridge.impl.version}", \
 										com.liferay.faces.bridge;version="${bridge.api.version}", \
