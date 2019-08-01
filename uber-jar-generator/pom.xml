@@ -14,6 +14,8 @@
 		<alloy.exports>\</alloy.exports>
 		<primefaces.imports>!org.primefaces.*,\</primefaces.imports>
 		<primefaces.exports>\</primefaces.exports>
+		<primefaces.extensions.imports>\</primefaces.extensions.imports>
+		<primefaces.extensions.exports>\</primefaces.extensions.exports>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -52,16 +54,16 @@
 			<properties>
 				<primefaces.imports>
 					!org.primefaces.*, \
-                    com.google.zxing.qrcode.*;resolution:=optional, \
-                    com.hazelcast.*;resolution:=optional, \
-                    com.lowagie.text.*;resolution:=optional, \
-                    com.rometools.rome.*;resolution:=optional, \
-                    net.glxn.qrgen.*;resolution:=optional, \
-                    org.ehcache.*;resolution:=optional, \
-                    org.apache.xmlbeans.*;resolution:=optional, \
-                    org.apache.poi.*;resolution:=optional, \
-                    org.krysalis.barcode4j.*;resolution:=optional, \
-                    org.owasp.*;resolution:=optional, \
+					com.google.zxing.qrcode.*;resolution:=optional, \
+					com.hazelcast.*;resolution:=optional, \
+					com.lowagie.text.*;resolution:=optional, \
+					com.rometools.rome.*;resolution:=optional, \
+					net.glxn.qrgen.*;resolution:=optional, \
+					org.ehcache.*;resolution:=optional, \
+					org.apache.xmlbeans.*;resolution:=optional, \
+					org.apache.poi.*;resolution:=optional, \
+					org.krysalis.barcode4j.*;resolution:=optional, \
+					org.owasp.*;resolution:=optional, \
 				</primefaces.imports>
 				<primefaces.version>7.0</primefaces.version>
 				<primefaces.exports>
@@ -73,6 +75,25 @@
 					<groupId>org.primefaces</groupId>
 					<artifactId>primefaces</artifactId>
 					<version>${primefaces.version}</version>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>primefaces-extensions</id>
+			<properties>
+				<primefaces.extensions.imports>
+					!org.primefaces.extensions.*, \
+				</primefaces.extensions.imports>
+				<primefaces.extensions.version>7.0.1</primefaces.extensions.version>
+				<primefaces.extensions.exports>
+					org.primefaces.extensions.*;version="${primefaces.extensions.version}", \
+				</primefaces.extensions.exports>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.primefaces.extensions</groupId>
+					<artifactId>primefaces-extensions</artifactId>
+					<version>${primefaces.extensions.version}</version>
 				</dependency>
 			</dependencies>
 		</profile>
@@ -98,6 +119,7 @@
 									Import-Package: \
 										${alloy.imports}
 										${primefaces.imports}
+										${primefaces.extensions.imports}
 										!com.liferay.faces,\
 										!com.liferay.faces.*,\
 										!com.sun.faces,\
@@ -131,6 +153,7 @@
 										*
 									Export-Package: \
 										${alloy.exports}
+										${primefaces.extensions.exports}
 										${primefaces.exports}
 										com.liferay.faces.bridge.internal;version="${bridge.impl.version}", \
 										com.liferay.faces.bridge.*.internal;version="${bridge.impl.version}", \
@@ -226,6 +249,13 @@
 									implementation="com.liferay.faces.maven.shade.plugin.extensions.ConfigTransformerImpl"
 								/>
 							</transformers>
+							<artifactSet>
+								<excludes>
+									<exclude>com.googlecode.libphonenumber:libphonenumber</exclude>
+									<exclude>com.google.code.gson:gson</exclude>
+									<exclude>org.apache.commons:commons-lang3</exclude>
+								</excludes>
+							</artifactSet>
 						</configuration>
 					</execution>
 				</executions>
